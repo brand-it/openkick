@@ -55,7 +55,7 @@ jobs:
         with:
           path: ~/elasticsearch
           key: ${{ runner.os }}-elasticsearch-${{ matrix.elasticsearch }}
-      - uses: ankane/setup-elasticsearch@v1
+      - uses: brandit/setup-elasticsearch@v1
         if: ${{ matrix.elasticsearch }}
         with:
           elasticsearch-version: ${{ matrix.elasticsearch }}
@@ -70,7 +70,7 @@ jobs:
         with:
           path: ~/opensearch
           key: ${{ runner.os }}-opensearch-${{ matrix.opensearch }}
-      - uses: ankane/setup-opensearch@v1
+      - uses: brandit/setup-opensearch@v1
         if: ${{ matrix.opensearch }}
         with:
           opensearch-version: ${{ matrix.opensearch }}
@@ -80,7 +80,7 @@ jobs:
             analysis-stempel
             analysis-ukrainian
 
-      - uses: ankane/setup-mongodb@v1
+      - uses: brandit/setup-mongodb@v1
         if: ${{ matrix.mongodb }}
 
       - run: |

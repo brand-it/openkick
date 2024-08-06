@@ -25,7 +25,7 @@ gemfile do
   gem "activerecord", require: "active_record"
   gem "activejob", require: "active_job"
   gem "sqlite3"
-  gem "openkick", git: "https://github.com/ankane/openkick.git"
+  gem "openkick", git: "https://github.com/brandit/openkick.git"
   # uncomment one
   # gem "elasticsearch"
   # gem "opensearch-ruby"
