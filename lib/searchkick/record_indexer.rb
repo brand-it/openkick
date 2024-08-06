@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class RecordIndexer
     attr_reader :index
 
@@ -28,7 +28,7 @@ module Searchkick
             routing = record.search_routing
           end
 
-          Searchkick::ReindexV2Job.perform_later(
+          Openkick::ReindexV2Job.perform_later(
             record.class.name,
             record.id.to_s,
             method_name ? method_name.to_s : nil,
@@ -36,8 +36,8 @@ module Searchkick
             index_name: index.name
           )
         else
-          Searchkick::BulkReindexJob.perform_later(
-            class_name: records.first.class.searchkick_options[:class_name],
+          Openkick::BulkReindexJob.perform_later(
+            class_name: records.first.class.openkick_options[:class_name],
             record_ids: records.map { |r| r.id.to_s },
             index_name: index.name,
             method_name: method_name ? method_name.to_s : nil
@@ -64,7 +64,7 @@ module Searchkick
       routing = items.to_h { |r| [r[:id], r[:routing]] }
       record_ids = routing.keys
 
-      relation = Searchkick.load_records(klass, record_ids)
+      relation = Openkick.load_records(klass, record_ids)
       # call search_import even for single records for nested associations
       relation = relation.search_import if relation.respond_to?(:search_import)
       records = relation.select(&:should_index?)
@@ -105,7 +105,7 @@ module Searchkick
     end
 
     def maybe_bulk(index_records, delete_records, method_name, single)
-      if Searchkick.callbacks_value == :bulk
+      if Openkick.callbacks_value == :bulk
         yield
       else
         # set action and data
@@ -118,7 +118,7 @@ module Searchkick
             single ? "Store" : "Import"
           end
         record = index_records.first || delete_records.first
-        name = record.class.searchkick_klass.name
+        name = record.class.openkick_klass.name
         message = lambda do |event|
           event[:name] = "#{name} #{action}"
           if single
@@ -129,7 +129,7 @@ module Searchkick
         end
 
         with_retries do
-          Searchkick.callbacks(:bulk, message: message) do
+          Openkick.callbacks(:bulk, message: message) do
             yield
           end
         end

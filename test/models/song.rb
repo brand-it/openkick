@@ -1,5 +1,5 @@
 class Song
-  searchkick
+  openkick
 
   def search_routing
     name

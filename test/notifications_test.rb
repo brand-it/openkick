@@ -2,14 +2,14 @@ require_relative "test_helper"
 
 class NotificationsTest < Minitest::Test
   def test_search
-    Product.searchkick_index.refresh
+    Product.openkick_index.refresh
 
     notifications = capture_notifications do
       Product.search("product").to_a
     end
 
     assert_equal 1, notifications.size
-    assert_equal "search.searchkick", notifications.last[:name]
+    assert_equal "search.openkick", notifications.last[:name]
   end
 
   private
@@ -19,7 +19,7 @@ class NotificationsTest < Minitest::Test
     callback = lambda do |name, started, finished, unique_id, payload|
       notifications << {name: name, payload: payload}
     end
-    ActiveSupport::Notifications.subscribed(callback, /searchkick/) do
+    ActiveSupport::Notifications.subscribed(callback, /openkick/) do
       yield
     end
     notifications

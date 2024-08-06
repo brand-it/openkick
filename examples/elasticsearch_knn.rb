@@ -1,7 +1,7 @@
 require "active_record"
 require "disco"
 require "elasticsearch"
-require "searchkick"
+require "openkick"
 
 ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
 ActiveRecord::Schema.verbose = false
@@ -16,7 +16,7 @@ class Movie < ActiveRecord::Base
   # remove "coder: " for Active Record < 7.1
   serialize :embedding, coder: JSON
 
-  searchkick \
+  openkick \
     mappings: {
       properties: {
         embedding: {

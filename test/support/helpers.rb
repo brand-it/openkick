@@ -26,7 +26,7 @@ class Minitest::Test
     ($setup_model ||= {})[model] ||= (model.reindex || true)
 
     # clear every time
-    Searchkick.callbacks(:bulk) do
+    Openkick.callbacks(:bulk) do
       model.destroy_all
     end
   end
@@ -38,9 +38,9 @@ class Minitest::Test
           model.create!(documents.shuffle)
         end
       end
-      model.searchkick_index.refresh
+      model.openkick_index.refresh
     else
-      Searchkick.callbacks(false) do
+      Openkick.callbacks(false) do
         with_transaction(model) do
           model.create!(documents.shuffle)
         end
@@ -89,26 +89,26 @@ class Minitest::Test
     _, stderr = capture_io do
       yield
     end
-    assert_match "[searchkick] WARNING: #{message}", stderr
+    assert_match "[openkick] WARNING: #{message}", stderr
   end
 
   def with_options(options, model = default_model)
-    previous_options = model.searchkick_options.dup
+    previous_options = model.openkick_options.dup
     begin
-      model.instance_variable_set(:@searchkick_index_name, nil)
-      model.searchkick_options.merge!(options)
+      model.instance_variable_set(:@openkick_index_name, nil)
+      model.openkick_options.merge!(options)
       model.reindex
       yield
     ensure
-      model.instance_variable_set(:@searchkick_index_name, nil)
-      model.searchkick_options.clear
-      model.searchkick_options.merge!(previous_options)
+      model.instance_variable_set(:@openkick_index_name, nil)
+      model.openkick_options.clear
+      model.openkick_options.merge!(previous_options)
     end
   end
 
   def with_callbacks(value, &block)
-    if Searchkick.callbacks?(default: nil).nil?
-      Searchkick.callbacks(value, &block)
+    if Openkick.callbacks?(default: nil).nil?
+      Openkick.callbacks(value, &block)
     else
       yield
     end

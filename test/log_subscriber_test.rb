@@ -26,7 +26,7 @@ class LogSubscriberTest < Minitest::Test
 
   def test_bulk
     output = capture_logs do
-      Searchkick.callbacks(:bulk) do
+      Openkick.callbacks(:bulk) do
         Product.create!(name: "Product A")
       end
     end
@@ -61,7 +61,7 @@ class LogSubscriberTest < Minitest::Test
 
   def test_multi_search
     output = capture_logs do
-      Searchkick.multi_search([Product.search("product")])
+      Openkick.multi_search([Product.search("product")])
     end
     assert_match "Multi Search", output
   end
@@ -69,7 +69,7 @@ class LogSubscriberTest < Minitest::Test
   private
 
   def create_products
-    Searchkick.callbacks(false) do
+    Openkick.callbacks(false) do
       3.times.map do
         Product.create!(name: "Product A")
       end

@@ -25,14 +25,14 @@ gemfile do
   gem "activerecord", require: "active_record"
   gem "activejob", require: "active_job"
   gem "sqlite3"
-  gem "searchkick", git: "https://github.com/ankane/searchkick.git"
+  gem "openkick", git: "https://github.com/ankane/openkick.git"
   # uncomment one
   # gem "elasticsearch"
   # gem "opensearch-ruby"
 end
 
-puts "Searchkick version: #{Searchkick::VERSION}"
-puts "Server version: #{Searchkick.server_version}"
+puts "Openkick version: #{Openkick::VERSION}"
+puts "Server version: #{Openkick.server_version}"
 
 ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
 ActiveJob::Base.queue_adapter = :inline
@@ -44,7 +44,7 @@ ActiveRecord::Schema.define do
 end
 
 class Product < ActiveRecord::Base
-  searchkick
+  openkick
 end
 
 Product.reindex

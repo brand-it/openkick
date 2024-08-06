@@ -1,3 +1,3 @@
 class Sku
-  searchkick callbacks: :async
+  openkick callbacks: :async
 end

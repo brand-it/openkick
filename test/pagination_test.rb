@@ -146,7 +146,7 @@ class PaginationTest < Minitest::Test
 
   def test_no_deep_paging
     Song.reindex
-    error = assert_raises(Searchkick::InvalidQueryError) do
+    error = assert_raises(Openkick::InvalidQueryError) do
       Song.search("*", offset: 10000, limit: 1).to_a
     end
     assert_match "Result window is too large", error.message
@@ -187,11 +187,11 @@ class PaginationTest < Minitest::Test
     store_names ["Product A", "Product B", "Product D", "Product E", "Product G"]
 
     pit_id =
-      if Searchkick.opensearch?
-        path = "#{CGI.escape(Product.searchkick_index.name)}/_search/point_in_time"
-        Searchkick.client.transport.perform_request("POST", path, {keep_alive: "5s"}).body["pit_id"]
+      if Openkick.opensearch?
+        path = "#{CGI.escape(Product.openkick_index.name)}/_search/point_in_time"
+        Openkick.client.transport.perform_request("POST", path, {keep_alive: "5s"}).body["pit_id"]
       else
-        Searchkick.client.open_point_in_time(index: Product.searchkick_index.name, keep_alive: "5s")["id"]
+        Openkick.client.open_point_in_time(index: Product.openkick_index.name, keep_alive: "5s")["id"]
       end
 
     store_names ["Product C", "Product F"]
@@ -215,10 +215,10 @@ class PaginationTest < Minitest::Test
     products = Product.search("product", page: 4, **options)
     assert_empty products.map(&:name)
 
-    if Searchkick.opensearch?
-      Searchkick.client.transport.perform_request("DELETE", "_search/point_in_time", {}, {pit_id: pit_id})
+    if Openkick.opensearch?
+      Openkick.client.transport.perform_request("DELETE", "_search/point_in_time", {}, {pit_id: pit_id})
     else
-      Searchkick.client.close_point_in_time(body: {id: pit_id})
+      Openkick.client.close_point_in_time(body: {id: pit_id})
     end
 
     error = assert_raises do
@@ -230,6 +230,6 @@ class PaginationTest < Minitest::Test
   private
 
   def pit_supported?
-    Searchkick.opensearch? ? !Searchkick.server_below?("2.4.0", true) : !Searchkick.server_below?("7.10.0")
+    Openkick.opensearch? ? !Openkick.server_below?("2.4.0", true) : !Openkick.server_below?("7.10.0")
   end
 end

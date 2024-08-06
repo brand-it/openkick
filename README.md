@@ -1,10 +1,10 @@
-# Searchkick
+# Openkick
 
 :rocket: Intelligent search made easy
 
-**Searchkick learns what your users are looking for.** As more people search, it gets smarter and the results get better. It’s friendly for developers - and magical for your users.
+**Openkick learns what your users are looking for.** As more people search, it gets smarter and the results get better. It’s friendly for developers - and magical for your users.
 
-Searchkick handles:
+Openkick handles:
 
 - stemming - `tomatoes` matches `tomato`
 - special characters - `jalapeno` matches `jalapeño`
@@ -26,7 +26,7 @@ Check out [Searchjoy](https://github.com/ankane/searchjoy) for analytics and [Au
 
 :tangerine: Battle-tested at [Instacart](https://www.instacart.com/opensource)
 
-[![Build Status](https://github.com/ankane/searchkick/actions/workflows/build.yml/badge.svg)](https://github.com/ankane/searchkick/actions)
+[![Build Status](https://github.com/ankane/openkick/actions/workflows/build.yml/badge.svg)](https://github.com/ankane/openkick/actions)
 
 ## Contents
 
@@ -58,19 +58,19 @@ brew services start opensearch
 Add these lines to your application’s Gemfile:
 
 ```ruby
-gem "searchkick"
+gem "openkick"
 
 gem "elasticsearch"   # select one
 gem "opensearch-ruby" # select one
 ```
 
-The latest version works with Elasticsearch 7 and 8 and OpenSearch 1 and 2. For Elasticsearch 6, use version 4.6.3 and [this readme](https://github.com/ankane/searchkick/blob/v4.6.3/README.md).
+The latest version works with Elasticsearch 7 and 8 and OpenSearch 1 and 2. For Elasticsearch 6, use version 4.6.3 and [this readme](https://github.com/ankane/openkick/blob/v4.6.3/README.md).
 
-Add searchkick to models you want to search.
+Add openkick to models you want to search.
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick
+  openkick
 end
 ```
 
@@ -89,7 +89,7 @@ products.each do |product|
 end
 ```
 
-Searchkick supports the complete [Elasticsearch Search API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html) and [OpenSearch Search API](https://opensearch.org/docs/latest/opensearch/rest-api/search/). As your search becomes more advanced, we recommend you use the [search server DSL](#advanced) for maximum flexibility.
+Openkick supports the complete [Elasticsearch Search API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html) and [OpenSearch Search API](https://opensearch.org/docs/latest/opensearch/rest-api/search/). As your search becomes more advanced, we recommend you use the [search server DSL](#advanced) for maximum flexibility.
 
 ## Querying
 
@@ -150,7 +150,7 @@ select: [:name]
 
 ### Results
 
-Searches return a `Searchkick::Relation` object. This responds like an array to most methods.
+Searches return a `Openkick::Relation` object. This responds like an array to most methods.
 
 ```ruby
 results = Product.search("milk")
@@ -266,7 +266,7 @@ By default, results must match the entire word - `back` will not match `backpack
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick word_start: [:name]
+  openkick word_start: [:name]
 end
 ```
 
@@ -314,13 +314,13 @@ Product.search("fresh honey", match: :phrase)
 
 ### Stemming and Language
 
-Searchkick stems words by default for better matching. `apple` and `apples` both stem to `appl`, so searches for either term will have the same matches.
+Openkick stems words by default for better matching. `apple` and `apples` both stem to `appl`, so searches for either term will have the same matches.
 
-Searchkick defaults to English for stemming. To change this, use:
+Openkick defaults to English for stemming. To change this, use:
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick language: "german"
+  openkick language: "german"
 end
 ```
 
@@ -339,7 +339,7 @@ You can also use a Hunspell dictionary for stemming.
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick stemmer: {type: "hunspell", locale: "en_US"}
+  openkick stemmer: {type: "hunspell", locale: "en_US"}
 end
 ```
 
@@ -347,7 +347,7 @@ Disable stemming with:
 
 ```ruby
 class Image < ApplicationRecord
-  searchkick stem: false
+  openkick stem: false
 end
 ```
 
@@ -355,7 +355,7 @@ Exclude certain words from stemming with:
 
 ```ruby
 class Image < ApplicationRecord
-  searchkick stem_exclusion: ["apples"]
+  openkick stem_exclusion: ["apples"]
 end
 ```
 
@@ -363,7 +363,7 @@ Or change how words are stemmed:
 
 ```ruby
 class Image < ApplicationRecord
-  searchkick stemmer_override: ["apples => other"]
+  openkick stemmer_override: ["apples => other"]
 end
 ```
 
@@ -371,7 +371,7 @@ end
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick search_synonyms: [["pop", "soda"], ["burger", "hamburger"]]
+  openkick search_synonyms: [["pop", "soda"], ["burger", "hamburger"]]
 end
 ```
 
@@ -400,7 +400,7 @@ Then use:
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick search_synonyms: "synonyms.txt"
+  openkick search_synonyms: "synonyms.txt"
 end
 ```
 
@@ -435,7 +435,7 @@ Product.search(query, fields: [:name_tagged])
 
 ### Misspellings
 
-By default, Searchkick handles misspelled queries by returning results with an [edit distance](https://en.wikipedia.org/wiki/Levenshtein_distance) of one.
+By default, Openkick handles misspelled queries by returning results with an [edit distance](https://en.wikipedia.org/wiki/Levenshtein_distance) of one.
 
 You can change this with:
 
@@ -443,7 +443,7 @@ You can change this with:
 Product.search("zucini", misspellings: {edit_distance: 2}) # zucchini
 ```
 
-To prevent poor precision and improve performance for correctly spelled queries (which should be a majority for most applications), Searchkick can first perform a search without misspellings, and if there are too few results, perform another with them.
+To prevent poor precision and improve performance for correctly spelled queries (which should be a majority for most applications), Openkick can first perform a search without misspellings, and if there are too few results, perform another with them.
 
 ```ruby
 Product.search("zuchini", misspellings: {below: 5})
@@ -524,7 +524,7 @@ class Product < ApplicationRecord
 end
 ```
 
-Searchkick uses `find_in_batches` to import documents. To eager load associations, use the `search_import` scope.
+Openkick uses `find_in_batches` to import documents. To eager load associations, use the `search_import` scope.
 
 ```ruby
 class Product < ApplicationRecord
@@ -554,9 +554,9 @@ For large data sets, try [parallel reindexing](#parallel-reindexing).
 
 #### Reindex
 
-- when you install or upgrade searchkick
+- when you install or upgrade openkick
 - change the `search_data` method
-- change the `searchkick` method
+- change the `openkick` method
 
 #### No need to reindex
 
@@ -576,11 +576,11 @@ There are four strategies for keeping the index synced with your database.
 
   ```ruby
   class Product < ApplicationRecord
-    searchkick callbacks: :async
+    openkick callbacks: :async
   end
   ```
 
-  Jobs are added to a queue named `searchkick`.
+  Jobs are added to a queue named `openkick`.
 
 3. Queuing
 
@@ -592,7 +592,7 @@ There are four strategies for keeping the index synced with your database.
 
   ```ruby
   class Product < ApplicationRecord
-    searchkick callbacks: false
+    openkick callbacks: false
   end
   ```
 
@@ -607,7 +607,7 @@ There are four strategies for keeping the index synced with your database.
 You can also do bulk updates.
 
 ```ruby
-Searchkick.callbacks(:bulk) do
+Openkick.callbacks(:bulk) do
   Product.find_each(&:update_fields)
 end
 ```
@@ -615,7 +615,7 @@ end
 Or temporarily skip updates.
 
 ```ruby
-Searchkick.callbacks(false) do
+Openkick.callbacks(false) do
   Product.find_each(&:update_fields)
 end
 ```
@@ -660,7 +660,7 @@ If you want to index and search filtered records, set:
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick unscope: true
+  openkick unscope: true
 end
 ```
 
@@ -674,7 +674,7 @@ Product.search("apple", track: {user_id: current_user.id})
 
 [See the docs](https://github.com/ankane/searchjoy) for how to install and use. Focus on top searches with a low conversion rate.
 
-Searchkick can then use the conversion data to learn what users are looking for. If a user searches for “ice cream” and adds Ben & Jerry’s Chunky Monkey to the cart (our conversion metric at Instacart), that item gets a little more weight for similar searches. This can make a huge difference on the quality of your search.
+Openkick can then use the conversion data to learn what users are looking for. If a user searches for “ice cream” and adds Ben & Jerry’s Chunky Monkey to the cart (our conversion metric at Instacart), that item gets a little more weight for similar searches. This can make a huge difference on the quality of your search.
 
 Add conversion data with:
 
@@ -683,7 +683,7 @@ class Product < ApplicationRecord
   has_many :conversions, class_name: "Searchjoy::Conversion", as: :convertable
   has_many :searches, class_name: "Searchjoy::Search", through: :conversions
 
-  searchkick conversions: [:conversions] # name of field
+  openkick conversions: [:conversions] # name of field
 
   def search_data
     {
@@ -711,7 +711,7 @@ Next, update your model. Create a separate method for conversion data so you can
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick conversions: [:conversions]
+  openkick conversions: [:conversions]
 
   def search_data
     {
@@ -739,7 +739,7 @@ Then, create a job to update the conversions column and reindex records with new
 ```ruby
 class UpdateConversionsJob < ApplicationJob
   def perform(class_name, since: nil, update: true, reindex: true)
-    model = Searchkick.load_model(class_name)
+    model = Openkick.load_model(class_name)
 
     # get records that have a recent conversion
     recently_converted_ids =
@@ -819,13 +819,13 @@ Autocomplete predicts what a user will type, making the search experience faster
 
 **Note:** To autocomplete on search terms rather than results, check out [Autosuggest](https://github.com/ankane/autosuggest).
 
-**Note 2:** If you only have a few thousand records, don’t use Searchkick for autocomplete. It’s *much* faster to load all records into JavaScript and autocomplete there (eliminates network requests).
+**Note 2:** If you only have a few thousand records, don’t use Openkick for autocomplete. It’s *much* faster to load all records into JavaScript and autocomplete there (eliminates network requests).
 
 First, specify which fields use this feature. This is necessary since autocomplete can increase the index size significantly, but don’t worry - this gives you blazing faster queries.
 
 ```ruby
 class Movie < ApplicationRecord
-  searchkick word_start: [:title, :director]
+  openkick word_start: [:title, :director]
 end
 ```
 
@@ -885,7 +885,7 @@ Then add the search box and JavaScript code to a view.
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick suggest: [:name] # fields to generate suggestions
+  openkick suggest: [:name] # fields to generate suggestions
 end
 ```
 
@@ -978,7 +978,7 @@ Specify which fields to index with highlighting.
 
 ```ruby
 class Band < ApplicationRecord
-  searchkick highlight: [:name]
+  openkick highlight: [:name]
 end
 ```
 
@@ -1038,7 +1038,7 @@ product.similar(fields: [:name], where: {size: "12 oz"})
 
 ```ruby
 class Restaurant < ApplicationRecord
-  searchkick locations: [:location]
+  openkick locations: [:location]
 
   def search_data
     attributes.merge(location: {lat: latitude, lon: longitude})
@@ -1086,7 +1086,7 @@ You can also index and search geo shapes.
 
 ```ruby
 class Restaurant < ApplicationRecord
-  searchkick geo_shape: [:bounds]
+  openkick geo_shape: [:bounds]
 
   def search_data
     attributes.merge(
@@ -1121,7 +1121,7 @@ Restaurant.search("burger", where: {bounds: {geo_shape: {type: "envelope", relat
 
 ## Inheritance
 
-Searchkick supports single table inheritance.
+Openkick supports single table inheritance.
 
 ```ruby
 class Dog < Animal
@@ -1132,7 +1132,7 @@ In your parent model, set:
 
 ```ruby
 class Animal < ApplicationRecord
-  searchkick inheritance: true
+  openkick inheritance: true
 end
 ```
 
@@ -1179,33 +1179,33 @@ Product.search("soap", explain: true).response
 See how the search server tokenizes your queries with:
 
 ```ruby
-Product.search_index.tokens("Dish Washer Soap", analyzer: "searchkick_index")
+Product.search_index.tokens("Dish Washer Soap", analyzer: "openkick_index")
 # ["dish", "dishwash", "washer", "washersoap", "soap"]
 
-Product.search_index.tokens("dishwasher soap", analyzer: "searchkick_search")
+Product.search_index.tokens("dishwasher soap", analyzer: "openkick_search")
 # ["dishwashersoap"] - no match
 
-Product.search_index.tokens("dishwasher soap", analyzer: "searchkick_search2")
+Product.search_index.tokens("dishwasher soap", analyzer: "openkick_search2")
 # ["dishwash", "soap"] - match!!
 ```
 
 Partial matches
 
 ```ruby
-Product.search_index.tokens("San Diego", analyzer: "searchkick_word_start_index")
+Product.search_index.tokens("San Diego", analyzer: "openkick_word_start_index")
 # ["s", "sa", "san", "d", "di", "die", "dieg", "diego"]
 
-Product.search_index.tokens("dieg", analyzer: "searchkick_word_search")
+Product.search_index.tokens("dieg", analyzer: "openkick_word_search")
 # ["dieg"] - match!!
 ```
 
-See the [complete list of analyzers](lib/searchkick/index_options.rb#L36).
+See the [complete list of analyzers](lib/openkick/index_options.rb#L36).
 
 ## Testing
 
 As you iterate on your search, it’s a good idea to add tests.
 
-For performance, only enable Searchkick callbacks for the tests that need it.
+For performance, only enable Openkick callbacks for the tests that need it.
 
 ### Parallel Tests
 
@@ -1214,13 +1214,13 @@ Rails 6 enables parallel tests by default. Add to your `test/test_helper.rb`:
 ```ruby
 class ActiveSupport::TestCase
   parallelize_setup do |worker|
-    Searchkick.index_suffix = worker
+    Openkick.index_suffix = worker
 
     # reindex models
     Product.reindex
 
     # and disable callbacks
-    Searchkick.disable_callbacks
+    Openkick.disable_callbacks
   end
 end
 ```
@@ -1230,11 +1230,11 @@ And use:
 ```ruby
 class ProductTest < ActiveSupport::TestCase
   def setup
-    Searchkick.enable_callbacks
+    Openkick.enable_callbacks
   end
 
   def teardown
-    Searchkick.disable_callbacks
+    Openkick.disable_callbacks
   end
 
   def test_search
@@ -1254,7 +1254,7 @@ Add to your `test/test_helper.rb`:
 Product.reindex
 
 # and disable callbacks
-Searchkick.disable_callbacks
+Openkick.disable_callbacks
 ```
 
 And use:
@@ -1262,11 +1262,11 @@ And use:
 ```ruby
 class ProductTest < Minitest::Test
   def setup
-    Searchkick.enable_callbacks
+    Openkick.enable_callbacks
   end
 
   def teardown
-    Searchkick.disable_callbacks
+    Openkick.disable_callbacks
   end
 
   def test_search
@@ -1288,11 +1288,11 @@ RSpec.configure do |config|
     Product.reindex
 
     # and disable callbacks
-    Searchkick.disable_callbacks
+    Openkick.disable_callbacks
   end
 
   config.around(:each, search: true) do |example|
-    Searchkick.callbacks(nil) do
+    Openkick.callbacks(nil) do
       example.run
     end
   end
@@ -1350,7 +1350,7 @@ And [setup-opensearch](https://github.com/ankane/setup-opensearch) for an easy w
 
 ## Deployment
 
-For the search server, Searchkick uses `ENV["ELASTICSEARCH_URL"]` for Elasticsearch and `ENV["OPENSEARCH_URL"]` for OpenSearch. This defaults to `http://localhost:9200`.
+For the search server, Openkick uses `ENV["ELASTICSEARCH_URL"]` for Elasticsearch and `ENV["OPENSEARCH_URL"]` for OpenSearch. This defaults to `http://localhost:9200`.
 
 - [Elastic Cloud](#elastic-cloud)
 - [Heroku](#heroku)
@@ -1368,7 +1368,7 @@ ENV["ELASTICSEARCH_URL"] = "https://user:password@host:port"
 Then deploy and reindex:
 
 ```sh
-rake searchkick:reindex:all
+rake openkick:reindex:all
 ```
 
 ### Heroku
@@ -1418,7 +1418,7 @@ heroku config:set ELASTICSEARCH_URL=https://elastic:password@12345.us-east-1.aws
 Then deploy and reindex:
 
 ```sh
-heroku run rake searchkick:reindex:all
+heroku run rake openkick:reindex:all
 ```
 
 ### Amazon OpenSearch Service
@@ -1438,7 +1438,7 @@ gem "faraday_middleware-aws-sigv4"
 and add to your initializer:
 
 ```ruby
-Searchkick.aws_credentials = {
+Openkick.aws_credentials = {
   access_key_id: ENV["AWS_ACCESS_KEY_ID"],
   secret_access_key: ENV["AWS_SECRET_ACCESS_KEY"],
   region: "us-east-1"
@@ -1448,7 +1448,7 @@ Searchkick.aws_credentials = {
 Then deploy and reindex:
 
 ```sh
-rake searchkick:reindex:all
+rake openkick:reindex:all
 ```
 
 ### Self-Hosted and Other
@@ -1464,7 +1464,7 @@ ENV["OPENSEARCH_URL"] = "https://user:password@host:port"
 Then deploy and reindex:
 
 ```sh
-rake searchkick:reindex:all
+rake openkick:reindex:all
 ```
 
 ### Data Protection
@@ -1488,7 +1488,7 @@ ENV["OPENSEARCH_URL"] = "https://user:password@host1,https://user:password@host2
 Create an initializer with:
 
 ```ruby
-Searchkick.client_options[:reload_connections] = true
+Openkick.client_options[:reload_connections] = true
 ```
 
 See the docs for [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/client/ruby-api/current/advanced-config.html) or [Opensearch](https://rubydoc.info/gems/opensearch-transport#configuration) for a complete list of options.
@@ -1500,7 +1500,7 @@ Add the following to `config/environments/production.rb`:
 ```ruby
 config.lograge.custom_options = lambda do |event|
   options = {}
-  options[:search] = event.payload[:searchkick_runtime] if event.payload[:searchkick_runtime].to_f > 0
+  options[:search] = event.payload[:openkick_runtime] if event.payload[:openkick_runtime].to_f > 0
   options
 end
 ```
@@ -1541,7 +1541,7 @@ By default, all string fields are searchable (can be used in `fields` option). S
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick searchable: [:name]
+  openkick searchable: [:name]
 end
 ```
 
@@ -1551,7 +1551,7 @@ By default, all string fields are filterable (can be used in `where` option). Sp
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick filterable: [:brand]
+  openkick filterable: [:brand]
 end
 ```
 
@@ -1575,16 +1575,16 @@ Product.search_index.promote(index_name)
 You can optionally track the status with Redis:
 
 ```ruby
-Searchkick.redis = Redis.new
+Openkick.redis = Redis.new
 ```
 
 And use:
 
 ```ruby
-Searchkick.reindex_status(index_name)
+Openkick.reindex_status(index_name)
 ```
 
-You can also have Searchkick wait for reindexing to complete
+You can also have Openkick wait for reindexing to complete
 
 ```ruby
 Product.reindex(mode: :async, wait: true)
@@ -1599,9 +1599,9 @@ gem "activejob-traffic_control", ">= 0.1.3"
 And create an initializer with:
 
 ```ruby
-ActiveJob::TrafficControl.client = Searchkick.redis
+ActiveJob::TrafficControl.client = Openkick.redis
 
-class Searchkick::BulkReindexJob
+class Openkick::BulkReindexJob
   concurrency 3
 end
 ```
@@ -1629,21 +1629,21 @@ Product.search_index.promote(index_name, update_refresh_interval: true)
 Push ids of records needing reindexing to a queue and reindex in bulk for better performance. First, set up Redis in an initializer. We recommend using [connection_pool](https://github.com/mperham/connection_pool).
 
 ```ruby
-Searchkick.redis = ConnectionPool.new { Redis.new }
+Openkick.redis = ConnectionPool.new { Redis.new }
 ```
 
 And ask your models to queue updates.
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick callbacks: :queue
+  openkick callbacks: :queue
 end
 ```
 
 Then, set up a background job to run.
 
 ```ruby
-Searchkick::ProcessQueueJob.perform_later(class_name: "Product")
+Openkick::ProcessQueueJob.perform_later(class_name: "Product")
 ```
 
 You can check the queue length with:
@@ -1656,11 +1656,11 @@ For more tips, check out [Keeping Elasticsearch in Sync](https://www.elastic.co/
 
 ### Routing
 
-Searchkick supports [routing](https://www.elastic.co/blog/customizing-your-document-routing), which can significantly speed up searches.
+Openkick supports [routing](https://www.elastic.co/blog/customizing-your-document-routing), which can significantly speed up searches.
 
 ```ruby
 class Business < ApplicationRecord
-  searchkick routing: true
+  openkick routing: true
 
   def search_routing
     city_id
@@ -1704,7 +1704,7 @@ Product.reindex(:prices_data)
 
 ## Advanced
 
-Searchkick makes it easy to use the Elasticsearch or OpenSearch DSL on its own.
+Openkick makes it easy to use the Elasticsearch or OpenSearch DSL on its own.
 
 ### Advanced Mapping
 
@@ -1712,7 +1712,7 @@ Create a custom mapping:
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick mappings: {
+  openkick mappings: {
     properties: {
       name: {type: "keyword"}
     }
@@ -1721,11 +1721,11 @@ end
 ```
 **Note:** If you use a custom mapping, you'll need to use [custom searching](#advanced-search) as well.
 
-To keep the mappings and settings generated by Searchkick, use:
+To keep the mappings and settings generated by Openkick, use:
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick merge_mappings: true, mappings: {...}
+  openkick merge_mappings: true, mappings: {...}
 end
 ```
 
@@ -1743,7 +1743,7 @@ View the response with:
 products.response
 ```
 
-To modify the query generated by Searchkick, use:
+To modify the query generated by Openkick, use:
 
 ```ruby
 products = Product.search("milk", body_options: {min_score: 1})
@@ -1763,7 +1763,7 @@ products =
 To access the `Elasticsearch::Client` or `OpenSearch::Client` directly, use:
 
 ```ruby
-Searchkick.client
+Openkick.client
 ```
 
 ## Multi Search
@@ -1773,7 +1773,7 @@ To batch search requests for performance, use:
 ```ruby
 products = Product.search("snacks")
 coupons = Coupon.search("snacks")
-Searchkick.multi_search([products, coupons])
+Openkick.multi_search([products, coupons])
 ```
 
 Then use `products` and `coupons` as typical results.
@@ -1785,7 +1785,7 @@ Then use `products` and `coupons` as typical results.
 Search across multiple models with:
 
 ```ruby
-Searchkick.search("milk", models: [Product, Category])
+Openkick.search("milk", models: [Product, Category])
 ```
 
 Boost specific models with:
@@ -1796,11 +1796,11 @@ indices_boost: {Category => 2, Product => 1}
 
 ## Multi-Tenancy
 
-Check out [this great post](https://www.tiagoamaro.com.br/2014/12/11/multi-tenancy-with-searchkick/) on the [Apartment](https://github.com/influitive/apartment) gem. Follow a similar pattern if you use another gem.
+Check out [this great post](https://www.tiagoamaro.com.br/2014/12/11/multi-tenancy-with-openkick/) on the [Apartment](https://github.com/influitive/apartment) gem. Follow a similar pattern if you use another gem.
 
 ## Scroll API
 
-Searchkick also supports the [scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#scroll-search-results). Scrolling is not intended for real time user requests, but rather for processing large amounts of data.
+Openkick also supports the [scroll API](https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#scroll-search-results). Scrolling is not intended for real time user requests, but rather for processing large amounts of data.
 
 ```ruby
 Product.search("*", scroll: "1m").scroll do |batch|
@@ -1827,7 +1827,7 @@ By default, Elasticsearch and OpenSearch limit paging to the first 10,000 result
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick deep_paging: true
+  openkick deep_paging: true
 end
 ```
 
@@ -1880,7 +1880,7 @@ Use custom settings
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick settings: {number_of_shards: 3}
+  openkick settings: {number_of_shards: 3}
 end
 ```
 
@@ -1888,7 +1888,7 @@ Use a different index name
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick index_name: "products_v2"
+  openkick index_name: "products_v2"
 end
 ```
 
@@ -1896,7 +1896,7 @@ Use a dynamic index name
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick index_name: -> { "#{name.tableize}-#{I18n.locale}" }
+  openkick index_name: -> { "#{name.tableize}-#{I18n.locale}" }
 end
 ```
 
@@ -1904,14 +1904,14 @@ Prefix the index name
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick index_prefix: "datakick"
+  openkick index_prefix: "datakick"
 end
 ```
 
 For all models
 
 ```ruby
-Searchkick.index_prefix = "datakick"
+Openkick.index_prefix = "datakick"
 ```
 
 Use a different term for boosting by conversions
@@ -1926,8 +1926,8 @@ Multiple conversion fields
 class Product < ApplicationRecord
   has_many :searches, class_name: "Searchjoy::Search"
 
-  # searchkick also supports multiple "conversions" fields
-  searchkick conversions: ["unique_user_conversions", "total_conversions"]
+  # openkick also supports multiple "conversions" fields
+  openkick conversions: ["unique_user_conversions", "total_conversions"]
 
   def search_data
     {
@@ -1952,25 +1952,25 @@ Product.search("banana", conversions: false) # no conversion boosting
 Change timeout
 
 ```ruby
-Searchkick.timeout = 15 # defaults to 10
+Openkick.timeout = 15 # defaults to 10
 ```
 
 Set a lower timeout for searches
 
 ```ruby
-Searchkick.search_timeout = 3
+Openkick.search_timeout = 3
 ```
 
 Change the search method name
 
 ```ruby
-Searchkick.search_method_name = :lookup
+Openkick.search_method_name = :lookup
 ```
 
 Change search queue name
 
 ```ruby
-Searchkick.queue_name = :search_reindex
+Openkick.queue_name = :search_reindex
 ```
 
 Eager load associations
@@ -1982,7 +1982,7 @@ Product.search("milk", includes: [:brand, :stores])
 Eager load different associations by model
 
 ```ruby
-Searchkick.search("*",  models: [Product, Store], model_includes: {Product => [:store], Store => [:product]})
+Openkick.search("*",  models: [Product, Store], model_includes: {Product => [:store], Store => [:product]})
 ```
 
 Run additional scopes on results
@@ -1995,7 +1995,7 @@ Specify default fields to search
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick default_fields: [:name]
+  openkick default_fields: [:name]
 end
 ```
 
@@ -2004,7 +2004,7 @@ Turn off special characters
 ```ruby
 class Product < ApplicationRecord
   # A will not match Ä
-  searchkick special_characters: false
+  openkick special_characters: false
 end
 ```
 
@@ -2012,7 +2012,7 @@ Turn on stemming for conversions
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick stem_conversions: true
+  openkick stem_conversions: true
 end
 ```
 
@@ -2020,7 +2020,7 @@ Make search case-sensitive
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick case_sensitive: true
+  openkick case_sensitive: true
 end
 ```
 
@@ -2030,7 +2030,7 @@ Change import batch size
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick batch_size: 200 # defaults to 1000
+  openkick batch_size: 200 # defaults to 1000
 end
 ```
 
@@ -2059,7 +2059,7 @@ Product.search("carrots", request_params: {search_type: "dfs_query_then_fetch"})
 Set options across all models
 
 ```ruby
-Searchkick.model_options = {
+Openkick.model_options = {
   batch_size: 200
 }
 ```
@@ -2068,7 +2068,7 @@ Reindex conditionally
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick callbacks: false
+  openkick callbacks: false
 
   # add the callbacks manually
   after_commit :reindex, if: -> (model) { model.previous_changes.key?("name") } # use your own condition
@@ -2078,7 +2078,7 @@ end
 Reindex all models - Rails only
 
 ```sh
-rake searchkick:reindex:all
+rake openkick:reindex:all
 ```
 
 Turn on misspellings after a certain number of characters
@@ -2122,7 +2122,7 @@ Due to the distributed nature of Elasticsearch and OpenSearch, you can get incor
 
 ```ruby
 class Product < ApplicationRecord
-  searchkick settings: {number_of_shards: 1}
+  openkick settings: {number_of_shards: 1}
 end
 ```
 
@@ -2132,7 +2132,7 @@ For convenience, this is set by default in the test environment.
 
 ### 5.0
 
-Searchkick 5 supports both the `elasticsearch` and `opensearch-ruby` gems. Add the one you want to use to your Gemfile:
+Openkick 5 supports both the `elasticsearch` and `opensearch-ruby` gems. Add the one you want to use to your Gemfile:
 
 ```ruby
 gem "elasticsearch"
@@ -2162,11 +2162,11 @@ store.products.reindex(mode: :queue)
 
 And there’s a [new option](#default-scopes) for models with default scopes.
 
-Check out the [changelog](https://github.com/ankane/searchkick/blob/master/CHANGELOG.md#500-2022-02-21) for the full list of changes.
+Check out the [changelog](https://github.com/ankane/openkick/blob/master/CHANGELOG.md#500-2022-02-21) for the full list of changes.
 
 ## History
 
-View the [changelog](https://github.com/ankane/searchkick/blob/master/CHANGELOG.md).
+View the [changelog](https://github.com/ankane/openkick/blob/master/CHANGELOG.md).
 
 ## Thanks
 
@@ -2176,16 +2176,16 @@ Thanks to Karel Minarik for [Elasticsearch Ruby](https://github.com/elasticsearc
 
 Everyone is encouraged to help improve this project. Here are a few ways you can help:
 
-- [Report bugs](https://github.com/ankane/searchkick/issues)
-- Fix bugs and [submit pull requests](https://github.com/ankane/searchkick/pulls)
+- [Report bugs](https://github.com/ankane/openkick/issues)
+- Fix bugs and [submit pull requests](https://github.com/ankane/openkick/pulls)
 - Write, clarify, or fix documentation
 - Suggest or add new features
 
 To get started with development:
 
 ```sh
-git clone https://github.com/ankane/searchkick.git
-cd searchkick
+git clone https://github.com/ankane/openkick.git
+cd openkick
 bundle install
 bundle exec rake test
 ```

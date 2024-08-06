@@ -1,7 +1,7 @@
 module Searckick
   class Railtie < Rails::Railtie
     rake_tasks do
-      load "tasks/searchkick.rake"
+      load "tasks/openkick.rake"
     end
   end
 end

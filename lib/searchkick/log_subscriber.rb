@@ -1,12 +1,12 @@
 # based on https://gist.github.com/mnutt/566725
-module Searchkick
+module Openkick
   class LogSubscriber < ActiveSupport::LogSubscriber
     def self.runtime=(value)
-      Thread.current[:searchkick_runtime] = value
+      Thread.current[:openkick_runtime] = value
     end
 
     def self.runtime
-      Thread.current[:searchkick_runtime] ||= 0
+      Thread.current[:openkick_runtime] ||= 0
     end
 
     def self.reset_runtime

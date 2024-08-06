@@ -7,7 +7,7 @@ class RoutingTest < Minitest::Test
   end
 
   def test_mappings
-    mappings = Store.searchkick_index.index_options[:mappings]
+    mappings = Store.openkick_index.index_options[:mappings]
     assert_equal mappings[:_routing], required: true
   end
 
@@ -32,7 +32,7 @@ class RoutingTest < Minitest::Test
     with_options({routing: true, callbacks: :queue}, Song) do
       store_names ["Dollar Tree"], Song
       Song.destroy_all
-      Searchkick::ProcessQueueJob.perform_later(class_name: "Song")
+      Openkick::ProcessQueueJob.perform_later(class_name: "Song")
     end
   end
 end

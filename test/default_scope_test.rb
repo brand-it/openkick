@@ -19,7 +19,7 @@ class DefaultScopeTest < Minitest::Test
     Band.reindex
     Band.search("*") # test works
 
-    error = assert_raises(Searchkick::Error) do
+    error = assert_raises(Openkick::Error) do
       Band.all.search("*")
     end
     assert_equal "search must be called on model, not relation", error.message

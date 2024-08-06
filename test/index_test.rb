@@ -7,22 +7,22 @@ class IndexTest < Minitest::Test
   end
 
   def test_tokens
-    assert_equal ["dollar", "dollartre", "tree"], Product.searchkick_index.tokens("Dollar Tree", analyzer: "searchkick_index")
+    assert_equal ["dollar", "dollartre", "tree"], Product.openkick_index.tokens("Dollar Tree", analyzer: "openkick_index")
   end
 
   def test_tokens_analyzer
-    assert_equal ["dollar", "tree"], Product.searchkick_index.tokens("Dollar Tree", analyzer: "searchkick_search2")
+    assert_equal ["dollar", "tree"], Product.openkick_index.tokens("Dollar Tree", analyzer: "openkick_search2")
   end
 
   def test_total_docs
     store_names ["Product A"]
-    assert_equal 1, Product.searchkick_index.total_docs
+    assert_equal 1, Product.openkick_index.total_docs
   end
 
   def test_clean_indices
-    suffix = Searchkick.index_suffix ? "_#{Searchkick.index_suffix}" : ""
-    old_index = Searchkick::Index.new("products_test#{suffix}_20130801000000000")
-    different_index = Searchkick::Index.new("items_test#{suffix}_20130801000000000")
+    suffix = Openkick.index_suffix ? "_#{Openkick.index_suffix}" : ""
+    old_index = Openkick::Index.new("products_test#{suffix}_20130801000000000")
+    different_index = Openkick::Index.new("items_test#{suffix}_20130801000000000")
 
     old_index.delete if old_index.exists?
     different_index.delete if different_index.exists?
@@ -31,45 +31,45 @@ class IndexTest < Minitest::Test
     old_index.create
     different_index.create
 
-    Product.searchkick_index.clean_indices
+    Product.openkick_index.clean_indices
 
-    assert Product.searchkick_index.exists?
+    assert Product.openkick_index.exists?
     assert different_index.exists?
     assert !old_index.exists?
   end
 
   def test_clean_indices_old_format
-    suffix = Searchkick.index_suffix ? "_#{Searchkick.index_suffix}" : ""
-    old_index = Searchkick::Index.new("products_test#{suffix}_20130801000000")
+    suffix = Openkick.index_suffix ? "_#{Openkick.index_suffix}" : ""
+    old_index = Openkick::Index.new("products_test#{suffix}_20130801000000")
     old_index.create
 
-    Product.searchkick_index.clean_indices
+    Product.openkick_index.clean_indices
 
     assert !old_index.exists?
   end
 
   def test_retain
     Product.reindex
-    assert_equal 1, Product.searchkick_index.all_indices.size
+    assert_equal 1, Product.openkick_index.all_indices.size
     Product.reindex(retain: true)
-    assert_equal 2, Product.searchkick_index.all_indices.size
+    assert_equal 2, Product.openkick_index.all_indices.size
   end
 
   def test_mappings
     store_names ["Dollar Tree"], Store
     assert_equal ["Dollar Tree"], Store.search(body: {query: {match: {name: "dollar"}}}).map(&:name)
-    mapping = Store.searchkick_index.mapping
+    mapping = Store.openkick_index.mapping
     assert_kind_of Hash, mapping
     assert_equal "text", mapping.values.first["mappings"]["properties"]["name"]["type"]
   end
 
   def test_settings
-    assert_kind_of Hash, Store.searchkick_index.settings
+    assert_kind_of Hash, Store.openkick_index.settings
   end
 
   def test_remove_blank_id
     store_names ["Product A"]
-    Product.searchkick_index.remove(Product.new)
+    Product.openkick_index.remove(Product.new)
     assert_search "product", ["Product A"]
   ensure
     Product.reindex
@@ -77,21 +77,21 @@ class IndexTest < Minitest::Test
 
   # keep simple for now, but maybe return client response in future
   def test_store_response
-    product = Searchkick.callbacks(false) { Product.create!(name: "Product A") }
-    assert_nil Product.searchkick_index.store(product)
+    product = Openkick.callbacks(false) { Product.create!(name: "Product A") }
+    assert_nil Product.openkick_index.store(product)
   end
 
   # keep simple for now, but maybe return client response in future
   def test_bulk_index_response
-    product = Searchkick.callbacks(false) { Product.create!(name: "Product A") }
-    assert_nil Product.searchkick_index.bulk_index([product])
+    product = Openkick.callbacks(false) { Product.create!(name: "Product A") }
+    assert_nil Product.openkick_index.bulk_index([product])
   end
 
   # TODO move
 
   def test_filterable
     store [{name: "Product A", alt_description: "Hello"}]
-    error = assert_raises(Searchkick::InvalidQueryError) do
+    error = assert_raises(Openkick::InvalidQueryError) do
       assert_search "*", [], where: {alt_description: "Hello"}
     end
     assert_match "Cannot search on field [alt_description] since it is not indexed", error.message
@@ -131,11 +131,11 @@ class IndexTest < Minitest::Test
         name: {type: "date"}
       }
     }
-    index = Searchkick::Index.new "dogs", mappings: mapping, _type: "dog"
+    index = Openkick::Index.new "dogs", mappings: mapping, _type: "dog"
     index.delete if index.exists?
     index.create_index
     index.store valid_dog
-    assert_raises(Searchkick::ImportError) do
+    assert_raises(Openkick::ImportError) do
       index.bulk_index [valid_dog, invalid_dog]
     end
   end

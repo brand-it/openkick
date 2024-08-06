@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class IndexOptions
     attr_reader :options
 
@@ -34,10 +34,10 @@ module Searchkick
       settings = {
         analysis: {
           analyzer: {
-            searchkick_keyword: {
+            openkick_keyword: {
               type: "custom",
               tokenizer: "keyword",
-              filter: ["lowercase"] + (options[:stem_conversions] ? ["searchkick_stemmer"] : [])
+              filter: ["lowercase"] + (options[:stem_conversions] ? ["openkick_stemmer"] : [])
             },
             default_analyzer => {
               type: "custom",
@@ -46,95 +46,95 @@ module Searchkick
               char_filter: ["ampersand"],
               tokenizer: "standard",
               # synonym should come last, after stemming and shingle
-              # shingle must come before searchkick_stemmer
-              filter: ["lowercase", "asciifolding", "searchkick_index_shingle", "searchkick_stemmer"]
+              # shingle must come before openkick_stemmer
+              filter: ["lowercase", "asciifolding", "openkick_index_shingle", "openkick_stemmer"]
             },
-            searchkick_search: {
+            openkick_search: {
               type: "custom",
               char_filter: ["ampersand"],
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "searchkick_search_shingle", "searchkick_stemmer"]
+              filter: ["lowercase", "asciifolding", "openkick_search_shingle", "openkick_stemmer"]
             },
-            searchkick_search2: {
+            openkick_search2: {
               type: "custom",
               char_filter: ["ampersand"],
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "searchkick_stemmer"]
+              filter: ["lowercase", "asciifolding", "openkick_stemmer"]
             },
             # https://github.com/leschenko/elasticsearch_autocomplete/blob/master/lib/elasticsearch_autocomplete/analyzers.rb
-            searchkick_autocomplete_search: {
+            openkick_autocomplete_search: {
               type: "custom",
               tokenizer: "keyword",
               filter: ["lowercase", "asciifolding"]
             },
-            searchkick_word_search: {
+            openkick_word_search: {
               type: "custom",
               tokenizer: "standard",
               filter: ["lowercase", "asciifolding"]
             },
-            searchkick_suggest_index: {
+            openkick_suggest_index: {
               type: "custom",
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "searchkick_suggest_shingle"]
+              filter: ["lowercase", "asciifolding", "openkick_suggest_shingle"]
             },
-            searchkick_text_start_index: {
+            openkick_text_start_index: {
               type: "custom",
               tokenizer: "keyword",
-              filter: ["lowercase", "asciifolding", "searchkick_edge_ngram"]
+              filter: ["lowercase", "asciifolding", "openkick_edge_ngram"]
             },
-            searchkick_text_middle_index: {
+            openkick_text_middle_index: {
               type: "custom",
               tokenizer: "keyword",
-              filter: ["lowercase", "asciifolding", "searchkick_ngram"]
+              filter: ["lowercase", "asciifolding", "openkick_ngram"]
             },
-            searchkick_text_end_index: {
+            openkick_text_end_index: {
               type: "custom",
               tokenizer: "keyword",
-              filter: ["lowercase", "asciifolding", "reverse", "searchkick_edge_ngram", "reverse"]
+              filter: ["lowercase", "asciifolding", "reverse", "openkick_edge_ngram", "reverse"]
             },
-            searchkick_word_start_index: {
+            openkick_word_start_index: {
               type: "custom",
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "searchkick_edge_ngram"]
+              filter: ["lowercase", "asciifolding", "openkick_edge_ngram"]
             },
-            searchkick_word_middle_index: {
+            openkick_word_middle_index: {
               type: "custom",
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "searchkick_ngram"]
+              filter: ["lowercase", "asciifolding", "openkick_ngram"]
             },
-            searchkick_word_end_index: {
+            openkick_word_end_index: {
               type: "custom",
               tokenizer: "standard",
-              filter: ["lowercase", "asciifolding", "reverse", "searchkick_edge_ngram", "reverse"]
+              filter: ["lowercase", "asciifolding", "reverse", "openkick_edge_ngram", "reverse"]
             }
           },
           filter: {
-            searchkick_index_shingle: {
+            openkick_index_shingle: {
               type: "shingle",
               token_separator: ""
             },
             # lucky find https://web.archiveorange.com/archive/v/AAfXfQ17f57FcRINsof7
-            searchkick_search_shingle: {
+            openkick_search_shingle: {
               type: "shingle",
               token_separator: "",
               output_unigrams: false,
               output_unigrams_if_no_shingles: true
             },
-            searchkick_suggest_shingle: {
+            openkick_suggest_shingle: {
               type: "shingle",
               max_shingle_size: 5
             },
-            searchkick_edge_ngram: {
+            openkick_edge_ngram: {
               type: "edge_ngram",
               min_gram: 1,
               max_gram: 50
             },
-            searchkick_ngram: {
+            openkick_ngram: {
               type: "ngram",
               min_gram: 1,
               max_gram: 50
             },
-            searchkick_stemmer: {
+            openkick_stemmer: {
               # use stemmer if language is lowercase, snowball otherwise
               type: language == language.to_s.downcase ? "stemmer" : "snowball",
               language: language || "English"
@@ -155,7 +155,7 @@ module Searchkick
       update_language(settings, language)
       update_stemming(settings)
 
-      if Searchkick.env == "test"
+      if Openkick.env == "test"
         settings[:number_of_shards] = 1
         settings[:number_of_replicas] = 0
       end
@@ -194,10 +194,10 @@ module Searchkick
           default_analyzer => {
             type: "ik_smart"
           },
-          searchkick_search: {
+          openkick_search: {
             type: "ik_smart"
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: "ik_max_word"
           }
         )
@@ -206,10 +206,10 @@ module Searchkick
           default_analyzer => {
             type: "smartcn"
           },
-          searchkick_search: {
+          openkick_search: {
             type: "smartcn"
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: "smartcn"
           }
         )
@@ -222,16 +222,16 @@ module Searchkick
             "kuromoji_part_of_speech",
             "cjk_width",
             "ja_stop",
-            "searchkick_stemmer",
+            "openkick_stemmer",
             "lowercase"
           ]
         }
         settings[:analysis][:analyzer].merge!(
           default_analyzer => analyzer.deep_dup,
-          searchkick_search: analyzer.deep_dup,
-          searchkick_search2: analyzer.deep_dup
+          openkick_search: analyzer.deep_dup,
+          openkick_search2: analyzer.deep_dup
         )
-        settings[:analysis][:filter][:searchkick_stemmer] = {
+        settings[:analysis][:filter][:openkick_stemmer] = {
           type: "kuromoji_stemmer"
         }
       when "korean"
@@ -239,10 +239,10 @@ module Searchkick
           default_analyzer => {
             type: "openkoreantext-analyzer"
           },
-          searchkick_search: {
+          openkick_search: {
             type: "openkoreantext-analyzer"
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: "openkoreantext-analyzer"
           }
         )
@@ -251,10 +251,10 @@ module Searchkick
           default_analyzer => {
             type: "nori"
           },
-          searchkick_search: {
+          openkick_search: {
             type: "nori"
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: "nori"
           }
         )
@@ -263,10 +263,10 @@ module Searchkick
           default_analyzer => {
             type: "vi_analyzer"
           },
-          searchkick_search: {
+          openkick_search: {
             type: "vi_analyzer"
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: "vi_analyzer"
           }
         )
@@ -275,10 +275,10 @@ module Searchkick
           default_analyzer => {
             type: language
           },
-          searchkick_search: {
+          openkick_search: {
             type: language
           },
-          searchkick_search2: {
+          openkick_search2: {
             type: language
           }
         )
@@ -292,7 +292,7 @@ module Searchkick
         case stemmer[:type]
         when "hunspell"
           # supports all token filter options
-          settings[:analysis][:filter][:searchkick_stemmer] = stemmer
+          settings[:analysis][:filter][:openkick_stemmer] = stemmer
         else
           raise ArgumentError, "Unknown stemmer: #{stemmer[:type]}"
         end
@@ -304,9 +304,9 @@ module Searchkick
       stem = false if settings[:analysis][:analyzer][default_analyzer][:type] != "custom"
 
       if stem == false
-        settings[:analysis][:filter].delete(:searchkick_stemmer)
+        settings[:analysis][:filter].delete(:openkick_stemmer)
         settings[:analysis][:analyzer].each do |_, analyzer|
-          analyzer[:filter].delete("searchkick_stemmer") if analyzer[:filter]
+          analyzer[:filter].delete("openkick_stemmer") if analyzer[:filter]
         end
       end
 
@@ -319,23 +319,23 @@ module Searchkick
         else
           stemmer_override[:rules] = options[:stemmer_override]
         end
-        settings[:analysis][:filter][:searchkick_stemmer_override] = stemmer_override
+        settings[:analysis][:filter][:openkick_stemmer_override] = stemmer_override
 
         settings[:analysis][:analyzer].each do |_, analyzer|
-          stemmer_index = analyzer[:filter].index("searchkick_stemmer") if analyzer[:filter]
-          analyzer[:filter].insert(stemmer_index, "searchkick_stemmer_override") if stemmer_index
+          stemmer_index = analyzer[:filter].index("openkick_stemmer") if analyzer[:filter]
+          analyzer[:filter].insert(stemmer_index, "openkick_stemmer_override") if stemmer_index
         end
       end
 
       if options[:stem_exclusion]
-        settings[:analysis][:filter][:searchkick_stem_exclusion] = {
+        settings[:analysis][:filter][:openkick_stem_exclusion] = {
           type: "keyword_marker",
           keywords: options[:stem_exclusion]
         }
 
         settings[:analysis][:analyzer].each do |_, analyzer|
-          stemmer_index = analyzer[:filter].index("searchkick_stemmer") if analyzer[:filter]
-          analyzer[:filter].insert(stemmer_index, "searchkick_stem_exclusion") if stemmer_index
+          stemmer_index = analyzer[:filter].index("openkick_stemmer") if analyzer[:filter]
+          analyzer[:filter].insert(stemmer_index, "openkick_stem_exclusion") if stemmer_index
         end
       end
     end
@@ -351,7 +351,7 @@ module Searchkick
         mapping[conversions_field] = {
           type: "nested",
           properties: {
-            query: {type: default_type, analyzer: "searchkick_keyword"},
+            query: {type: default_type, analyzer: "openkick_keyword"},
             count: {type: "integer"}
           }
         }
@@ -387,7 +387,7 @@ module Searchkick
 
           mapping_options.except(:highlight, :searchable, :filterable, :word).each do |type, f|
             if options[:match] == type || f.include?(field)
-              fields[type] = {type: default_type, index: true, analyzer: "searchkick_#{type}_index"}
+              fields[type] = {type: default_type, index: true, analyzer: "openkick_#{type}_index"}
             end
           end
         end
@@ -432,7 +432,7 @@ module Searchkick
 
       unless options[:searchable]
         if options[:match] && options[:match] != :word
-          dynamic_fields[options[:match]] = {type: default_type, index: true, analyzer: "searchkick_#{options[:match]}_index"}
+          dynamic_fields[options[:match]] = {type: default_type, index: true, analyzer: "openkick_#{options[:match]}_index"}
         end
 
         if word
@@ -465,7 +465,7 @@ module Searchkick
       synonyms = options[:synonyms] || []
       synonyms = synonyms.call if synonyms.respond_to?(:call)
       if synonyms.any?
-        settings[:analysis][:filter][:searchkick_synonym] = {
+        settings[:analysis][:filter][:openkick_synonym] = {
           type: "synonym",
           # only remove a single space from synonyms so three-word synonyms will fail noisily instead of silently
           synonyms: synonyms.select { |s| s.size > 1 }.map { |s| s.is_a?(Array) ? s.map { |s2| s2.sub(/\s+/, "") }.join(",") : s }.map(&:downcase)
@@ -479,10 +479,10 @@ module Searchkick
         # - Only apply the synonym expansion at index time
         # - Don't have the synonym filter applied search
         # - Use directional synonyms where appropriate. You want to make sure that you're not injecting terms that are too general.
-        settings[:analysis][:analyzer][default_analyzer][:filter].insert(2, "searchkick_synonym")
+        settings[:analysis][:analyzer][default_analyzer][:filter].insert(2, "openkick_synonym")
 
         %w(word_start word_middle word_end).each do |type|
-          settings[:analysis][:analyzer]["searchkick_#{type}_index".to_sym][:filter].insert(2, "searchkick_synonym")
+          settings[:analysis][:analyzer]["openkick_#{type}_index".to_sym][:filter].insert(2, "openkick_synonym")
         end
       end
     end
@@ -504,19 +504,19 @@ module Searchkick
             synonyms: search_synonyms.select { |s| s.size > 1 }.map { |s| s.is_a?(Array) ? s.join(",") : s }.map(&:downcase)
           }
         end
-        settings[:analysis][:filter][:searchkick_synonym_graph] = synonym_graph
+        settings[:analysis][:filter][:openkick_synonym_graph] = synonym_graph
 
         if ["japanese", "japanese2"].include?(options[:language])
-          [:searchkick_search, :searchkick_search2].each do |analyzer|
-            settings[:analysis][:analyzer][analyzer][:filter].insert(4, "searchkick_synonym_graph")
+          [:openkick_search, :openkick_search2].each do |analyzer|
+            settings[:analysis][:analyzer][analyzer][:filter].insert(4, "openkick_synonym_graph")
           end
         else
-          [:searchkick_search2, :searchkick_word_search].each do |analyzer|
+          [:openkick_search2, :openkick_word_search].each do |analyzer|
             unless settings[:analysis][:analyzer][analyzer].key?(:filter)
               raise Error, "Search synonyms are not supported yet for language"
             end
 
-            settings[:analysis][:analyzer][analyzer][:filter].insert(2, "searchkick_synonym_graph")
+            settings[:analysis][:analyzer][analyzer][:filter].insert(2, "openkick_synonym_graph")
           end
         end
       end
@@ -542,11 +542,11 @@ module Searchkick
     end
 
     def default_analyzer
-      :searchkick_index
+      :openkick_index
     end
 
     def below73?
-      Searchkick.server_below?("7.3.0")
+      Openkick.server_below?("7.3.0")
     end
   end
 end

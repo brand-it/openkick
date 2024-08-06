@@ -1,5 +1,5 @@
 class Speaker
-  searchkick \
+  openkick \
     conversions: ["conversions_a", "conversions_b"],
     search_synonyms: [
       ["clorox", "bleach"],

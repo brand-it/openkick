@@ -1,7 +1,7 @@
 options = {}
 options[:logger] = $logger if !defined?(RedisClient)
 
-Searchkick.redis =
+Openkick.redis =
   if !defined?(Redis)
     RedisClient.config.new_pool
   elsif defined?(ConnectionPool)

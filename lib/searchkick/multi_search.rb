@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class MultiSearch
     attr_reader :queries
 
@@ -20,7 +20,7 @@ module Searchkick
       retry_queries = []
       search_queries.each_with_index do |query, i|
         if perform_retry && query.retry_misspellings?(responses[i])
-          query.send(:prepare) # okay, since we don't want to expose this method outside Searchkick
+          query.send(:prepare) # okay, since we don't want to expose this method outside Openkick
           retry_queries << query
         else
           query.handle_response(responses[i])
@@ -35,7 +35,7 @@ module Searchkick
     end
 
     def client
-      Searchkick.client
+      Openkick.client
     end
   end
 end

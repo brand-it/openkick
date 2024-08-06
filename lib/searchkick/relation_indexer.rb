@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class RelationIndexer
     attr_reader :index
 
@@ -47,11 +47,11 @@ module Searchkick
     end
 
     def batches_left
-      Searchkick.with_redis { |r| r.call("SCARD", batches_key) }
+      Openkick.with_redis { |r| r.call("SCARD", batches_key) }
     end
 
     def batch_completed(batch_id)
-      Searchkick.with_redis { |r| r.call("SREM", batches_key, [batch_id]) }
+      Openkick.with_redis { |r| r.call("SREM", batches_key, [batch_id]) }
     end
 
     private
@@ -130,7 +130,7 @@ module Searchkick
 
     def full_reindex_async(relation)
       batch_id = 1
-      class_name = relation.searchkick_options[:class_name]
+      class_name = relation.openkick_options[:class_name]
 
       in_batches(relation) do |items|
         batch_job(class_name, batch_id, items.map(&:id))
@@ -139,8 +139,8 @@ module Searchkick
     end
 
     def batch_job(class_name, batch_id, record_ids)
-      Searchkick.with_redis { |r| r.call("SADD", batches_key, [batch_id]) }
-      Searchkick::BulkReindexJob.perform_later(
+      Openkick.with_redis { |r| r.call("SADD", batches_key, [batch_id]) }
+      Openkick::BulkReindexJob.perform_later(
         class_name: class_name,
         index_name: index.name,
         batch_id: batch_id,
@@ -149,7 +149,7 @@ module Searchkick
     end
 
     def batches_key
-      "searchkick:reindex:#{index.name}:batches"
+      "openkick:reindex:#{index.name}:batches"
     end
   end
 end

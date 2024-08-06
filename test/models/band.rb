@@ -1,3 +1,3 @@
 class Band
-  searchkick
+  openkick
 end

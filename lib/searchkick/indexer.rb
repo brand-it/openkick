@@ -1,6 +1,6 @@
 # thread-local (technically fiber-local) indexer
 # used to aggregate bulk callbacks across models
-module Searchkick
+module Openkick
   class Indexer
     attr_reader :queued_items
 
@@ -10,7 +10,7 @@ module Searchkick
 
     def queue(items)
       @queued_items.concat(items)
-      perform unless Searchkick.callbacks_value == :bulk
+      perform unless Openkick.callbacks_value == :bulk
     end
 
     def perform
@@ -19,7 +19,7 @@ module Searchkick
 
       return if items.empty?
 
-      response = Searchkick.client.bulk(body: items)
+      response = Openkick.client.bulk(body: items)
       if response["errors"]
         # note: delete does not set error when item not found
         first_with_error = response["items"].map do |item|

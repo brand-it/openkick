@@ -54,7 +54,7 @@
 
 ## 5.0.5 (2022-10-09)
 
-- Added `model` method to `Searchkick::Relation`
+- Added `model` method to `Openkick::Relation`
 - Fixed deprecation warning with `redis` gem
 - Fixed `respond_to?` method on relation loading relation
 - Fixed `Relation loaded` error for non-mutating methods on relation
@@ -85,12 +85,12 @@
 - Added basic protection from unfiltered parameters to `where` option
 - Added `models` option to `similar` method
 - Changed async full reindex to fetch ids instead of using ranges for numeric primary keys with Active Record
-- Changed `searchkick_index_options` to return symbol keys (instead of mix of strings and symbols)
+- Changed `openkick_index_options` to return symbol keys (instead of mix of strings and symbols)
 - Changed non-anchored regular expressions to match expected results (previously warned)
 - Changed record reindex to return `true` to match model and relation reindex
 - Updated async reindex job to call `search_import` for nested associations
 - Fixed removing records when `should_index?` is `false` when `reindex` called on relation
-- Fixed issue with `merge_mappings` for fields that use `searchkick` options
+- Fixed issue with `merge_mappings` for fields that use `openkick` options
 - Raise error when `search` called on relations
 - Raise `ArgumentError` (instead of warning) for invalid regular expression modifiers
 - Raise `ArgumentError` instead of `RuntimeError` for unknown operators
@@ -192,7 +192,7 @@
 
 - Added `chinese2` and `korean2` languages
 - Improved performance of async full reindex
-- Fixed `searchkick:reindex:all` rake task for Rails 6
+- Fixed `openkick:reindex:all` rake task for Rails 6
 
 ## 4.1.0 (2019-08-01)
 
@@ -358,7 +358,7 @@ Breaking changes
 
 ## 2.2.0 (2017-03-19)
 
-- Fixed bug with text values longer than 256 characters and `_all` field - see [#850](https://github.com/ankane/searchkick/issues/850)
+- Fixed bug with text values longer than 256 characters and `_all` field - see [#850](https://github.com/ankane/openkick/issues/850)
 - Fixed issue with `_all` field in `searchable`
 - Fixed `exclude` option with `word_start`
 
@@ -377,7 +377,7 @@ Breaking changes
 
 - Added support for queuing updates [experimental]
 - Added `refresh_interval` option to `reindex`
-- Prefer `search_index` over `searchkick_index`
+- Prefer `search_index` over `openkick_index`
 
 ## 2.0.3 (2017-01-12)
 
@@ -443,7 +443,7 @@ Breaking changes
 
 - Official support for Elasticsearch 5
 - Boost exact matches for partial matching
-- Added `searchkick_debug` method
+- Added `openkick_debug` method
 - Added `geo_polygon` filter
 
 ## 1.3.6 (2016-10-08)
@@ -526,8 +526,8 @@ Breaking changes
 
 ## 1.0.2 (2015-11-15)
 
-- Throw `Searchkick::ImportError` for errors when importing records
-- Errors now inherit from `Searchkick::Error`
+- Throw `Openkick::ImportError` for errors when importing records
+- Errors now inherit from `Openkick::Error`
 - Added `order` option to aggregations
 - Added `mapping` method
 
@@ -548,7 +548,7 @@ Breaking changes
 
 Breaking changes
 
-- Raise `Searchkick::DangerousOperation` error when calling reindex with scope
+- Raise `Openkick::DangerousOperation` error when calling reindex with scope
 - Enabled misspellings by default for partial matches
 - Enabled transpositions by default for misspellings
 
@@ -565,7 +565,7 @@ Breaking changes
 - Much better performance for where queries if no facets
 - Added basic support for regex
 - Added support for routing
-- Made `Searchkick.disable_callbacks` thread-safe
+- Made `Openkick.disable_callbacks` thread-safe
 
 ## 0.8.7 (2015-02-14)
 
@@ -676,7 +676,7 @@ Breaking changes
 ## 0.6.3 (2014-04-08)
 
 - Removed patron since no support for Windows
-- Added error if `searchkick` is called multiple times
+- Added error if `openkick` is called multiple times
 
 ## 0.6.2 (2014-04-05)
 

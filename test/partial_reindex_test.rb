@@ -12,10 +12,10 @@ class PartialReindexTest < Minitest::Test
     product = Product.first
     product.name = "Bye"
     product.color = "Red"
-    Searchkick.callbacks(false) do
+    Openkick.callbacks(false) do
       product.save!
     end
-    Product.searchkick_index.refresh
+    Product.openkick_index.refresh
 
     # index not updated
     assert_search "hi", ["Hi"], fields: [:name], load: false
@@ -40,10 +40,10 @@ class PartialReindexTest < Minitest::Test
     product = Product.first
     product.name = "Bye"
     product.color = "Red"
-    Searchkick.callbacks(false) do
+    Openkick.callbacks(false) do
       product.save!
     end
-    Product.searchkick_index.refresh
+    Product.openkick_index.refresh
 
     # index not updated
     assert_search "hi", ["Hi"], fields: [:name], load: false
@@ -65,9 +65,9 @@ class PartialReindexTest < Minitest::Test
     store [{name: "Hi", color: "Blue"}]
 
     product = Product.first
-    Product.searchkick_index.remove(product)
+    Product.openkick_index.remove(product)
 
-    error = assert_raises(Searchkick::ImportError) do
+    error = assert_raises(Openkick::ImportError) do
       Product.reindex(:search_name)
     end
     assert_match "document missing", error.message
@@ -77,9 +77,9 @@ class PartialReindexTest < Minitest::Test
     store [{name: "Hi", color: "Blue"}]
 
     product = Product.first
-    Product.searchkick_index.remove(product)
+    Product.openkick_index.remove(product)
 
-    error = assert_raises(Searchkick::ImportError) do
+    error = assert_raises(Openkick::ImportError) do
       product.reindex(:search_name)
     end
     assert_match "document missing", error.message

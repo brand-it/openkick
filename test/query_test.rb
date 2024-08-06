@@ -71,7 +71,7 @@ class QueryTest < Minitest::Test
     store_names ["Store A"], Store
 
     associations = {Product => [:store], Store => [:products]}
-    result = Searchkick.search("*", models: [Product, Store], model_includes: associations)
+    result = Openkick.search("*", models: [Product, Store], model_includes: associations)
 
     assert_equal 2, result.length
 

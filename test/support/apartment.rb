@@ -12,7 +12,7 @@ Apartment.configure do |config|
 end
 
 class Tenant < ActiveRecord::Base
-  searchkick index_prefix: -> { Apartment::Tenant.current }
+  openkick index_prefix: -> { Apartment::Tenant.current }
 end
 
 tenants.each do |tenant|

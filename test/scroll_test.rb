@@ -56,7 +56,7 @@ class ScrollTest < Minitest::Test
 
   def test_no_option
     products = Product.search("*")
-    error = assert_raises Searchkick::Error do
+    error = assert_raises Openkick::Error do
       products.scroll
     end
     assert_match(/Pass .+ option/, error.message)

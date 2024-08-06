@@ -22,7 +22,7 @@ class UnscopeTest < Minitest::Test
       Artist.unscoped.reindex(mode: :async)
     end
 
-    Artist.searchkick_index.refresh
+    Artist.openkick_index.refresh
     assert_search "*", ["Test", "Test 2"]
   end
 

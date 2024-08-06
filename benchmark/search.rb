@@ -5,10 +5,10 @@ require "benchmark/ips"
 
 ActiveRecord::Base.default_timezone = :utc
 ActiveRecord::Base.time_zone_aware_attributes = true
-ActiveRecord::Base.establish_connection adapter: "sqlite3", database: "/tmp/searchkick"
+ActiveRecord::Base.establish_connection adapter: "sqlite3", database: "/tmp/openkick"
 
 class Product < ActiveRecord::Base
-  searchkick batch_size: 1000
+  openkick batch_size: 1000
 
   def search_data
     {

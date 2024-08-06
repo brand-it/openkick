@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class RecordData
     TYPE_KEYS = ["type", :type]
 

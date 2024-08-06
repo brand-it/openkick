@@ -1,5 +1,5 @@
 class Product
-  searchkick \
+  openkick \
     synonyms: [
       ["clorox", "bleach"],
       ["burger", "hamburger"],

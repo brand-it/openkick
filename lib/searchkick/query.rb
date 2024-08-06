@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Query
     include Enumerable
     extend Forwardable
@@ -33,7 +33,7 @@ module Searchkick
       @klass = klass
       @term = term
       @options = options
-      @match_suffix = options[:match] || searchkick_options[:match] || "analyzed"
+      @match_suffix = options[:match] || openkick_options[:match] || "analyzed"
 
       # prevent Ruby warnings
       @type = nil
@@ -46,16 +46,16 @@ module Searchkick
       prepare
     end
 
-    def searchkick_index
-      klass ? klass.searchkick_index : nil
+    def openkick_index
+      klass ? klass.openkick_index : nil
     end
 
-    def searchkick_options
-      klass ? klass.searchkick_options : {}
+    def openkick_options
+      klass ? klass.openkick_options : {}
     end
 
-    def searchkick_klass
-      klass ? klass.searchkick_klass : nil
+    def openkick_klass
+      klass ? klass.openkick_klass : nil
     end
 
     def params
@@ -63,17 +63,17 @@ module Searchkick
         @index_mapping = {}
         Array(options[:models]).each do |model|
           # there can be multiple models per index name due to inheritance - see #1259
-          (@index_mapping[model.searchkick_index.name] ||= []) << model
+          (@index_mapping[model.openkick_index.name] ||= []) << model
         end
       end
 
       index =
         if options[:index_name]
-          Array(options[:index_name]).map { |v| v.respond_to?(:searchkick_index) ? v.searchkick_index.name : v }.join(",")
+          Array(options[:index_name]).map { |v| v.respond_to?(:openkick_index) ? v.openkick_index.name : v }.join(",")
         elsif options[:models]
           @index_mapping.keys.join(",")
-        elsif searchkick_index
-          searchkick_index.name
+        elsif openkick_index
+          openkick_index.name
         else
           # fixes warning about accessing system indices
           "*,-.*"
@@ -113,10 +113,10 @@ module Searchkick
 
       # no easy way to tell which host the client will use
       host =
-        if Searchkick.client.transport.respond_to?(:transport)
-          Searchkick.client.transport.transport.hosts.first
+        if Openkick.client.transport.respond_to?(:transport)
+          Openkick.client.transport.transport.hosts.first
         else
-          Searchkick.client.transport.hosts.first
+          Openkick.client.transport.hosts.first
         end
       credentials = host[:user] || host[:password] ? "#{host[:user]}:#{host[:password]}@" : nil
       params = ["pretty"]
@@ -148,33 +148,33 @@ module Searchkick
       }
 
       if options[:debug]
-        puts "Searchkick Version: #{Searchkick::VERSION}"
-        puts "Elasticsearch Version: #{Searchkick.server_version}"
+        puts "Openkick Version: #{Openkick::VERSION}"
+        puts "Elasticsearch Version: #{Openkick.server_version}"
         puts
 
-        puts "Model Searchkick Options"
-        pp searchkick_options
+        puts "Model Openkick Options"
+        pp openkick_options
         puts
 
         puts "Search Options"
         pp options
         puts
 
-        if searchkick_index
+        if openkick_index
           puts "Model Search Data"
           begin
-            pp klass.limit(3).map { |r| RecordData.new(searchkick_index, r).index_data }
+            pp klass.limit(3).map { |r| RecordData.new(openkick_index, r).index_data }
           rescue => e
             puts "#{e.class.name}: #{e.message}"
           end
           puts
 
           puts "Elasticsearch Mapping"
-          puts JSON.pretty_generate(searchkick_index.mapping)
+          puts JSON.pretty_generate(openkick_index.mapping)
           puts
 
           puts "Elasticsearch Settings"
-          puts JSON.pretty_generate(searchkick_index.settings)
+          puts JSON.pretty_generate(openkick_index.settings)
           puts
         end
 
@@ -187,11 +187,11 @@ module Searchkick
       end
 
       # set execute for multi search
-      @execute = Results.new(searchkick_klass, response, opts)
+      @execute = Results.new(openkick_klass, response, opts)
     end
 
     def retry_misspellings?(response)
-      @misspellings_below && response["error"].nil? && Results.new(searchkick_klass, response).total_count < @misspellings_below
+      @misspellings_below && response["error"].nil? && Results.new(openkick_klass, response).total_count < @misspellings_below
     end
 
     private
@@ -219,7 +219,7 @@ module Searchkick
         )
 
           raise UnsupportedVersionError
-        elsif e.message.match?(/analyzer \[searchkick_.+\] not found/)
+        elsif e.message.match?(/analyzer \[openkick_.+\] not found/)
           raise InvalidQueryError, "Bad mapping - run #{reindex_command}"
         else
           raise InvalidQueryError, e.message
@@ -230,17 +230,17 @@ module Searchkick
     end
 
     def reindex_command
-      searchkick_klass ? "#{searchkick_klass.name}.reindex" : "reindex"
+      openkick_klass ? "#{openkick_klass.name}.reindex" : "reindex"
     end
 
     def execute_search
-      name = searchkick_klass ? "#{searchkick_klass.name} Search" : "Search"
+      name = openkick_klass ? "#{openkick_klass.name} Search" : "Search"
       event = {
         name: name,
         query: params
       }
-      ActiveSupport::Notifications.instrument("search.searchkick", event) do
-        Searchkick.client.search(params)
+      ActiveSupport::Notifications.instrument("search.openkick", event) do
+        Openkick.client.search(params)
       end
     end
 
@@ -252,13 +252,13 @@ module Searchkick
       # pagination
       page = [options[:page].to_i, 1].max
       # maybe use index.max_result_window in the future
-      default_limit = searchkick_options[:deep_paging] ? 1_000_000_000 : 10_000
+      default_limit = openkick_options[:deep_paging] ? 1_000_000_000 : 10_000
       per_page = (options[:limit] || options[:per_page] || default_limit).to_i
       padding = [options[:padding].to_i, 0].max
       offset = (options[:offset] || (page - 1) * per_page + padding).to_i
       scroll = options[:scroll]
 
-      max_result_window = searchkick_options[:max_result_window]
+      max_result_window = openkick_options[:max_result_window]
       original_per_page = per_page
       if max_result_window
         offset = max_result_window if offset > max_result_window
@@ -289,7 +289,7 @@ module Searchkick
               like: like,
               min_doc_freq: 1,
               min_term_freq: 1,
-              analyzer: "searchkick_search2"
+              analyzer: "openkick_search2"
             }
           }
           if fields.all? { |f| f.start_with?("*.") }
@@ -374,21 +374,21 @@ module Searchkick
             field_misspellings = misspellings && (!misspellings_fields || misspellings_fields.include?(base_field(field)))
 
             if field == "_all" || field.end_with?(".analyzed")
-              shared_options[:cutoff_frequency] = 0.001 unless operator.to_s == "and" || field_misspellings == false || (!below73? && !track_total_hits?) || match_type == :match_phrase || !below80? || Searchkick.opensearch?
-              qs << shared_options.merge(analyzer: "searchkick_search")
+              shared_options[:cutoff_frequency] = 0.001 unless operator.to_s == "and" || field_misspellings == false || (!below73? && !track_total_hits?) || match_type == :match_phrase || !below80? || Openkick.opensearch?
+              qs << shared_options.merge(analyzer: "openkick_search")
 
-              # searchkick_search and searchkick_search2 are the same for some languages
-              unless %w(japanese japanese2 korean polish ukrainian vietnamese).include?(searchkick_options[:language])
-                qs << shared_options.merge(analyzer: "searchkick_search2")
+              # openkick_search and openkick_search2 are the same for some languages
+              unless %w(japanese japanese2 korean polish ukrainian vietnamese).include?(openkick_options[:language])
+                qs << shared_options.merge(analyzer: "openkick_search2")
               end
-              exclude_analyzer = "searchkick_search2"
+              exclude_analyzer = "openkick_search2"
             elsif field.end_with?(".exact")
               f = field.split(".")[0..-2].join(".")
               queries_to_add << {match: {f => shared_options.merge(analyzer: "keyword")}}
               exclude_field = f
               exclude_analyzer = "keyword"
             else
-              analyzer = field.match?(/\.word_(start|middle|end)\z/) ? "searchkick_word_search" : "searchkick_autocomplete_search"
+              analyzer = field.match?(/\.word_(start|middle|end)\z/) ? "openkick_word_search" : "openkick_autocomplete_search"
               qs << shared_options.merge(analyzer: analyzer)
               exclude_analyzer = analyzer
             end
@@ -404,7 +404,7 @@ module Searchkick
             end
 
             # boost exact matches more
-            if field =~ /\.word_(start|middle|end)\z/ && searchkick_options[:word] != false
+            if field =~ /\.word_(start|middle|end)\z/ && openkick_options[:word] != false
               queries_to_add << {
                 bool: {
                   must: {
@@ -451,21 +451,21 @@ module Searchkick
 
         # type when inheritance
         where = ensure_permitted(options[:where] || {}).dup
-        if searchkick_options[:inheritance] && (options[:type] || (klass != searchkick_klass && searchkick_index))
-          where[:type] = [options[:type] || klass].flatten.map { |v| searchkick_index.klass_document_type(v, true) }
+        if openkick_options[:inheritance] && (options[:type] || (klass != openkick_klass && openkick_index))
+          where[:type] = [options[:type] || klass].flatten.map { |v| openkick_index.klass_document_type(v, true) }
         end
 
         models = Array(options[:models])
-        if models.any? { |m| m != m.searchkick_klass }
+        if models.any? { |m| m != m.openkick_klass }
           # aliases are not supported with _index in ES below 7.5
           # see https://github.com/elastic/elasticsearch/pull/46640
           if below75?
-            Searchkick.warn("Passing child models to models option throws off hits and pagination - use type option instead")
+            Openkick.warn("Passing child models to models option throws off hits and pagination - use type option instead")
           else
             index_type_or =
               models.map do |m|
-                v = {_index: m.searchkick_index.name}
-                v[:type] = m.searchkick_index.klass_document_type(m, true) if m != m.searchkick_klass
+                v = {_index: m.openkick_index.name}
+                v[:type] = m.openkick_index.klass_document_type(m, true) if m != m.openkick_klass
                 v
               end
 
@@ -510,7 +510,7 @@ module Searchkick
         set_highlights(payload, fields) if options[:highlight]
 
         # timeout shortly after client times out
-        payload[:timeout] ||= "#{((Searchkick.search_timeout + 1) * 1000).round}ms"
+        payload[:timeout] ||= "#{((Openkick.search_timeout + 1) * 1000).round}ms"
 
         # An empty array will cause only the _id and _type for each hit to be returned
         # https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-source-filtering.html
@@ -534,8 +534,8 @@ module Searchkick
       end
 
       # type
-      if !searchkick_options[:inheritance] && (options[:type] || (klass != searchkick_klass && searchkick_index))
-        @type = [options[:type] || klass].flatten.map { |v| searchkick_index.klass_document_type(v) }
+      if !openkick_options[:inheritance] && (options[:type] || (klass != openkick_klass && openkick_index))
+        @type = [options[:type] || klass].flatten.map { |v| openkick_index.klass_document_type(v) }
       end
 
       # routing
@@ -567,9 +567,9 @@ module Searchkick
 
     def set_fields
       boost_fields = {}
-      fields = options[:fields] || searchkick_options[:default_fields] || searchkick_options[:searchable]
-      all = searchkick_options.key?(:_all) ? searchkick_options[:_all] : false
-      default_match = options[:match] || searchkick_options[:match] || :word
+      fields = options[:fields] || openkick_options[:default_fields] || openkick_options[:searchable]
+      all = openkick_options.key?(:_all) ? openkick_options[:_all] : false
+      default_match = options[:match] || openkick_options[:match] || :word
       fields =
         if fields
           fields.map do |value|
@@ -625,7 +625,7 @@ module Searchkick
     end
 
     def set_conversions
-      conversions_fields = Array(options[:conversions] || searchkick_options[:conversions]).map(&:to_s)
+      conversions_fields = Array(options[:conversions] || openkick_options[:conversions]).map(&:to_s)
       if conversions_fields.present? && options[:conversions] != false
         conversions_fields.map do |conversions_field|
           {
@@ -737,7 +737,7 @@ module Searchkick
       return unless options[:indices_boost]
 
       indices_boost = options[:indices_boost].map do |key, boost|
-        index = key.respond_to?(:searchkick_index) ? key.searchkick_index.name : key
+        index = key.respond_to?(:openkick_index) ? key.openkick_index.name : key
         {index => boost}
       end
 
@@ -750,7 +750,7 @@ module Searchkick
       if suggest.is_a?(Array)
         suggest_fields = suggest
       else
-        suggest_fields = (searchkick_options[:suggest] || []).map(&:to_s)
+        suggest_fields = (openkick_options[:suggest] || []).map(&:to_s)
 
         # intersection
         if options[:fields]
@@ -912,7 +912,7 @@ module Searchkick
           filters << {bool: {must: value.map { |or_statement| {bool: {filter: where_filters(or_statement)}} }}}
         elsif field == :_raw
           unless value.is_a?(Raw)
-            raise TypeError, "Use Searchkick.raw for raw filters"
+            raise TypeError, "Use Openkick.raw for raw filters"
           end
 
           filters << value.value
@@ -1008,10 +1008,10 @@ module Searchkick
               when :in
                 filters << term_filters(field, op_value)
               when :exists
-                # TODO add support for false in Searchkick 6
+                # TODO add support for false in Openkick 6
                 if op_value != true
-                  # TODO raise error in Searchkick 6
-                  Searchkick.warn("Passing a value other than true to exists is not supported")
+                  # TODO raise error in Openkick 6
+                  Openkick.warn("Passing a value other than true to exists is not supported")
                 end
                 filters << {exists: {field: field}}
               else
@@ -1163,7 +1163,7 @@ module Searchkick
     end
 
     def track_total_hits?
-      searchkick_options[:deep_paging] || body_options[:track_total_hits]
+      openkick_options[:deep_paging] || body_options[:track_total_hits]
     end
 
     def body_options
@@ -1171,19 +1171,19 @@ module Searchkick
     end
 
     def below73?
-      Searchkick.server_below?("7.3.0")
+      Openkick.server_below?("7.3.0")
     end
 
     def below75?
-      Searchkick.server_below?("7.5.0")
+      Openkick.server_below?("7.5.0")
     end
 
     def below710?
-      Searchkick.server_below?("7.10.0")
+      Openkick.server_below?("7.10.0")
     end
 
     def below80?
-      Searchkick.server_below?("8.0.0")
+      Openkick.server_below?("8.0.0")
     end
   end
 end

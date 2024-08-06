@@ -1,10 +1,10 @@
-require_relative "lib/searchkick/version"
+require_relative "lib/openkick/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "searchkick"
-  spec.version       = Searchkick::VERSION
+  spec.name          = "openkick"
+  spec.version       = Openkick::VERSION
   spec.summary       = "Intelligent search made easy with Rails and Elasticsearch or OpenSearch"
-  spec.homepage      = "https://github.com/ankane/searchkick"
+  spec.homepage      = "https://github.com/ankane/openkick"
   spec.license       = "MIT"
 
   spec.author        = "Andrew Kane"

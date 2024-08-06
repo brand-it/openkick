@@ -53,7 +53,7 @@ class ResultsTest < Minitest::Test
 
   def test_model_name_without_model
     store_names ["Product A", "Product B"]
-    results = Searchkick.search("product")
+    results = Openkick.search("product")
     assert_equal "Result", results.model_name.human
   end
 end

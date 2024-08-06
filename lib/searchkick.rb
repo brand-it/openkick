@@ -10,45 +10,45 @@ require "hashie"
 require "forwardable"
 
 # modules
-require_relative "searchkick/controller_runtime"
-require_relative "searchkick/index"
-require_relative "searchkick/index_cache"
-require_relative "searchkick/index_options"
-require_relative "searchkick/indexer"
-require_relative "searchkick/hash_wrapper"
-require_relative "searchkick/log_subscriber"
-require_relative "searchkick/model"
-require_relative "searchkick/multi_search"
-require_relative "searchkick/query"
-require_relative "searchkick/reindex_queue"
-require_relative "searchkick/record_data"
-require_relative "searchkick/record_indexer"
-require_relative "searchkick/relation"
-require_relative "searchkick/relation_indexer"
-require_relative "searchkick/results"
-require_relative "searchkick/raw"
-require_relative "searchkick/version"
-require_relative "searchkick/where"
+require_relative "openkick/controller_runtime"
+require_relative "openkick/index"
+require_relative "openkick/index_cache"
+require_relative "openkick/index_options"
+require_relative "openkick/indexer"
+require_relative "openkick/hash_wrapper"
+require_relative "openkick/log_subscriber"
+require_relative "openkick/model"
+require_relative "openkick/multi_search"
+require_relative "openkick/query"
+require_relative "openkick/reindex_queue"
+require_relative "openkick/record_data"
+require_relative "openkick/record_indexer"
+require_relative "openkick/relation"
+require_relative "openkick/relation_indexer"
+require_relative "openkick/results"
+require_relative "openkick/raw"
+require_relative "openkick/version"
+require_relative "openkick/where"
 
 # integrations
-require_relative "searchkick/railtie" if defined?(Rails)
+require_relative "openkick/railtie" if defined?(Rails)
 
-module Searchkick
+module Openkick
   # requires faraday
-  autoload :Middleware, "searchkick/middleware"
+  autoload :Middleware, "openkick/middleware"
 
   # background jobs
-  autoload :BulkReindexJob,  "searchkick/bulk_reindex_job"
-  autoload :ProcessBatchJob, "searchkick/process_batch_job"
-  autoload :ProcessQueueJob, "searchkick/process_queue_job"
-  autoload :ReindexV2Job,    "searchkick/reindex_v2_job"
+  autoload :BulkReindexJob,  "openkick/bulk_reindex_job"
+  autoload :ProcessBatchJob, "openkick/process_batch_job"
+  autoload :ProcessQueueJob, "openkick/process_queue_job"
+  autoload :ReindexV2Job,    "openkick/reindex_v2_job"
 
   # errors
   class Error < StandardError; end
   class MissingIndexError < Error; end
   class UnsupportedVersionError < Error
     def message
-      "This version of Searchkick requires Elasticsearch 7+ or OpenSearch 1+"
+      "This version of Openkick requires Elasticsearch 7+ or OpenSearch 1+"
     end
   end
   class InvalidQueryError < Error; end
@@ -64,7 +64,7 @@ module Searchkick
   self.timeout = 10
   self.models = []
   self.client_options = {}
-  self.queue_name = :searchkick
+  self.queue_name = :openkick
   self.model_options = {}
 
   def self.client
@@ -73,7 +73,7 @@ module Searchkick
         if self.client_type
           self.client_type
         elsif defined?(OpenSearch::Client) && defined?(Elasticsearch::Client)
-          raise Error, "Multiple clients found - set Searchkick.client_type = :elasticsearch or :opensearch"
+          raise Error, "Multiple clients found - set Openkick.client_type = :elasticsearch or :opensearch"
         elsif defined?(OpenSearch::Client)
           :opensearch
         elsif defined?(Elasticsearch::Client)
@@ -83,7 +83,7 @@ module Searchkick
         end
 
       # check after client to ensure faraday is installed
-      # TODO remove in Searchkick 6
+      # TODO remove in Openkick 6
       if defined?(Typhoeus) && Gem::Version.new(Faraday::VERSION) < Gem::Version.new("0.14.0")
         require "typhoeus/adapters/faraday"
       end
@@ -94,7 +94,7 @@ module Searchkick
           transport_options: {request: {timeout: timeout}, headers: {content_type: "application/json"}},
           retry_on_failure: 2
         }.deep_merge(client_options)) do |f|
-          f.use Searchkick::Middleware
+          f.use Openkick::Middleware
           f.request :aws_sigv4, signer_middleware_aws_params if aws_credentials
         end
       else
@@ -105,7 +105,7 @@ module Searchkick
           transport_options: {request: {timeout: timeout}, headers: {content_type: "application/json"}},
           retry_on_failure: 2
         }.deep_merge(client_options)) do |f|
-          f.use Searchkick::Middleware
+          f.use Openkick::Middleware
           f.request :aws_sigv4, signer_middleware_aws_params if aws_credentials
         end
       end
@@ -136,7 +136,7 @@ module Searchkick
     @opensearch
   end
 
-  # TODO always check true version in Searchkick 6
+  # TODO always check true version in Openkick 6
   def self.server_below?(version, true_version = false)
     server_version = !true_version && opensearch? ? "7.10.2" : self.server_version
     Gem::Version.new(server_version.split("-")[0]) < Gem::Version.new(version.split("-")[0])
@@ -148,11 +148,11 @@ module Searchkick
 
     # convert index_name into models if possible
     # this should allow for easier upgrade
-    if options[:index_name] && !options[:models] && Array(options[:index_name]).all? { |v| v.respond_to?(:searchkick_index) }
+    if options[:index_name] && !options[:models] && Array(options[:index_name]).all? { |v| v.respond_to?(:openkick_index) }
       options[:models] = options.delete(:index_name)
     end
 
-    # make Searchkick.search(models: [Product]) and Product.search equivalent
+    # make Openkick.search(models: [Product]) and Product.search equivalent
     unless klass
       models = Array(options[:models])
       if models.size == 1
@@ -162,14 +162,14 @@ module Searchkick
     end
 
     if klass
-      if (options[:models] && Array(options[:models]) != [klass]) || Array(options[:index_name]).any? { |v| v.respond_to?(:searchkick_index) && v != klass }
-        raise ArgumentError, "Use Searchkick.search to search multiple models"
+      if (options[:models] && Array(options[:models]) != [klass]) || Array(options[:index_name]).any? { |v| v.respond_to?(:openkick_index) && v != klass }
+        raise ArgumentError, "Use Openkick.search to search multiple models"
       end
     end
 
-    # TODO remove in Searchkick 6
+    # TODO remove in Openkick 6
     if options[:execute] == false
-      Searchkick.warn("The execute option is no longer needed")
+      Openkick.warn("The execute option is no longer needed")
       options.delete(:execute)
     end
 
@@ -185,7 +185,7 @@ module Searchkick
       name: "Multi Search",
       body: queries.flat_map { |q| [q.params.except(:body).to_json, q.body.to_json] }.map { |v| "#{v}\n" }.join
     }
-    ActiveSupport::Notifications.instrument("multi_search.searchkick", event) do
+    ActiveSupport::Notifications.instrument("multi_search.openkick", event) do
       MultiSearch.new(queries).perform
     end
   end
@@ -230,7 +230,7 @@ module Searchkick
             event[:name] = "Bulk"
             event[:count] = indexer.queued_items.size
           end
-          ActiveSupport::Notifications.instrument("request.searchkick", event) do
+          ActiveSupport::Notifications.instrument("request.openkick", event) do
             indexer.perform
           end
         end
@@ -273,7 +273,7 @@ module Searchkick
   end
 
   def self.warn(message)
-    super("[searchkick] WARNING: #{message}")
+    super("[openkick] WARNING: #{message}")
   end
 
   # private
@@ -298,12 +298,12 @@ module Searchkick
     model = class_name.safe_constantize
     raise Error, "Could not find class: #{class_name}" unless model
     if allow_child
-      unless model.respond_to?(:searchkick_klass)
-        raise Error, "#{class_name} is not a searchkick model"
+      unless model.respond_to?(:openkick_klass)
+        raise Error, "#{class_name} is not a openkick model"
       end
     else
-      unless Searchkick.models.include?(model)
-        raise Error, "#{class_name} is not a searchkick model"
+      unless Openkick.models.include?(model)
+        raise Error, "#{class_name} is not a openkick model"
       end
     end
     model
@@ -311,17 +311,17 @@ module Searchkick
 
   # private
   def self.indexer
-    Thread.current[:searchkick_indexer] ||= Indexer.new
+    Thread.current[:openkick_indexer] ||= Indexer.new
   end
 
   # private
   def self.callbacks_value
-    Thread.current[:searchkick_callbacks_enabled]
+    Thread.current[:openkick_callbacks_enabled]
   end
 
   # private
   def self.callbacks_value=(value)
-    Thread.current[:searchkick_callbacks_enabled] = value
+    Thread.current[:openkick_callbacks_enabled] = value
   end
 
   # private
@@ -346,7 +346,7 @@ module Searchkick
     # safety check to make sure used properly in code
     raise Error, "Cannot scope relation" if relation?(model)
 
-    if model.searchkick_options[:unscope]
+    if model.openkick_options[:unscope]
       model.unscoped
     else
       model
@@ -376,15 +376,15 @@ module Searchkick
 end
 
 ActiveSupport.on_load(:active_record) do
-  extend Searchkick::Model
+  extend Openkick::Model
 end
 
 ActiveSupport.on_load(:mongoid) do
-  Mongoid::Document::ClassMethods.include Searchkick::Model
+  Mongoid::Document::ClassMethods.include Openkick::Model
 end
 
 ActiveSupport.on_load(:action_controller) do
-  include Searchkick::ControllerRuntime
+  include Openkick::ControllerRuntime
 end
 
-Searchkick::LogSubscriber.attach_to :searchkick
+Openkick::LogSubscriber.attach_to :openkick

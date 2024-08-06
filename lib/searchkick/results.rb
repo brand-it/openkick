@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Results
     include Enumerable
     extend Forwardable
@@ -193,9 +193,9 @@ module Searchkick
       else
         begin
           # TODO Active Support notifications for this scroll call
-          Results.new(@klass, Searchkick.client.scroll(scroll: options[:scroll], body: {scroll_id: scroll_id}), @options)
+          Results.new(@klass, Openkick.client.scroll(scroll: options[:scroll], body: {scroll_id: scroll_id}), @options)
         rescue => e
-          if Searchkick.not_found_error?(e) && e.message =~ /search_context_missing_exception/i
+          if Openkick.not_found_error?(e) && e.message =~ /search_context_missing_exception/i
             raise Error, "Scroll id has expired"
           else
             raise e
@@ -209,9 +209,9 @@ module Searchkick
         # try to clear scroll
         # not required as scroll will expire
         # but there is a cost to open scrolls
-        Searchkick.client.clear_scroll(scroll_id: scroll_id)
+        Openkick.client.clear_scroll(scroll_id: scroll_id)
       rescue => e
-        raise e unless Searchkick.transport_error?(e)
+        raise e unless Openkick.transport_error?(e)
       end
     end
 
@@ -304,14 +304,14 @@ module Searchkick
     def build_hits
       @build_hits ||= begin
         if missing_records.any?
-          Searchkick.warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join("/")} #{v[:id]}" }.join(", ")}")
+          Openkick.warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join("/")} #{v[:id]}" }.join(", ")}")
         end
         with_hit_and_missing_records[0]
       end
     end
 
     def results_query(records, hits)
-      records = Searchkick.scope(records)
+      records = Openkick.scope(records)
 
       ids = hits.map { |hit| hit["_id"] }
       if options[:includes] || options[:model_includes]
@@ -326,7 +326,7 @@ module Searchkick
         records = options[:scope_results].call(records)
       end
 
-      Searchkick.load_records(records, ids)
+      Openkick.load_records(records, ids)
     end
 
     def combine_includes(result, inc)

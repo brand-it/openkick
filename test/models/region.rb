@@ -1,5 +1,5 @@
 class Region
-  searchkick \
+  openkick \
     geo_shape: [:territory]
 
   attr_accessor :territory

@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Raw
     attr_reader :value
 

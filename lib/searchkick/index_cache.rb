@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class IndexCache
     def initialize(max_size: 20)
       @data = {}

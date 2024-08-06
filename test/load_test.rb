@@ -8,7 +8,7 @@ class LoadTest < Minitest::Test
 
   def test_false
     store_names ["Product A"]
-    assert_kind_of Searchkick::HashWrapper, Product.search("product", load: false).first
+    assert_kind_of Openkick::HashWrapper, Product.search("product", load: false).first
   end
 
   def test_false_methods
@@ -18,7 +18,7 @@ class LoadTest < Minitest::Test
 
   def test_false_with_includes
     store_names ["Product A"]
-    assert_kind_of Searchkick::HashWrapper, Product.search("product", load: false, includes: [:store]).first
+    assert_kind_of Openkick::HashWrapper, Product.search("product", load: false, includes: [:store]).first
   end
 
   def test_false_nested_object

@@ -1,5 +1,5 @@
 class Animal
-  searchkick \
+  openkick \
     inheritance: true,
     text_start: [:name],
     suggest: [:name]

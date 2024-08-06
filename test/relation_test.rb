@@ -2,7 +2,7 @@ require_relative "test_helper"
 
 class RelationTest < Minitest::Test
   def test_loaded
-    Product.searchkick_index.refresh
+    Product.openkick_index.refresh
     products = Product.search("*")
     refute products.loaded?
     assert_equal 0, products.count
@@ -10,7 +10,7 @@ class RelationTest < Minitest::Test
     refute products.clone.loaded?
     refute products.dup.loaded?
     refute products.limit(2).loaded?
-    error = assert_raises(Searchkick::Error) do
+    error = assert_raises(Openkick::Error) do
       products.limit!(2)
     end
     assert_equal "Relation loaded", error.message
@@ -53,12 +53,12 @@ class RelationTest < Minitest::Test
 
   def test_model
     assert_equal Product, Product.search("product").model
-    assert_nil Searchkick.search("product").model
+    assert_nil Openkick.search("product").model
   end
 
   def test_klass
     assert_equal Product, Product.search("product").klass
-    assert_nil Searchkick.search("product").klass
+    assert_nil Openkick.search("product").klass
   end
 
   def test_respond_to

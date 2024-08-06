@@ -13,7 +13,7 @@ class InheritanceTest < Minitest::Test
   end
 
   def test_child_index_name
-    assert_equal "animals_test#{ENV["TEST_ENV_NUMBER"]}", Dog.searchkick_index.name
+    assert_equal "animals_test#{ENV["TEST_ENV_NUMBER"]}", Dog.openkick_index.name
   end
 
   def test_child_search
@@ -78,7 +78,7 @@ class InheritanceTest < Minitest::Test
     Animal.reindex
     # note: the models option is less efficient than Animal.search("bear", type: [Cat, Dog])
     # since it requires two database calls instead of one to Animal
-    assert_equal 2, Searchkick.search("bear", models: [Cat, Dog]).size
+    assert_equal 2, Openkick.search("bear", models: [Cat, Dog]).size
   end
 
   def test_missing_records
@@ -87,8 +87,8 @@ class InheritanceTest < Minitest::Test
     Animal.reindex
     record = Animal.find_by(name: "Bear A")
     record.delete
-    assert_output nil, /\[searchkick\] WARNING: Records in search index do not exist in database: Cat\/Dog \d+/ do
-      result = Searchkick.search("bear", models: [Cat, Dog])
+    assert_output nil, /\[openkick\] WARNING: Records in search index do not exist in database: Cat\/Dog \d+/ do
+      result = Openkick.search("bear", models: [Cat, Dog])
       assert_equal ["Bear B"], result.map(&:name)
       assert_equal [record.id.to_s], result.missing_records.map { |v| v[:id] }
       assert_equal [[Cat, Dog]], result.missing_records.map { |v| v[:model].sort_by(&:model_name) }
@@ -103,7 +103,7 @@ class InheritanceTest < Minitest::Test
     store_names ["Bear B"], Dog
     store_names ["Bear C"]
     Animal.reindex
-    assert_equal 2, Searchkick.search("bear", models: [Cat, Product]).size
+    assert_equal 2, Openkick.search("bear", models: [Cat, Product]).size
 
     # hits and pagination will be off with this approach (for now)
     # ideal case is add where conditions (index a, type a OR index b)
@@ -111,9 +111,9 @@ class InheritanceTest < Minitest::Test
     # see https://github.com/elastic/elasticsearch/issues/23306
     # show warning for now
     # alternative is disallow inherited models with models option
-    expected = Searchkick.server_below?("7.5.0") ? 3 : 2
-    assert_equal expected, Searchkick.search("bear", models: [Cat, Product]).hits.size
-    assert_equal expected, Searchkick.search("bear", models: [Cat, Product], per_page: 1).total_pages
+    expected = Openkick.server_below?("7.5.0") ? 3 : 2
+    assert_equal expected, Openkick.search("bear", models: [Cat, Product]).hits.size
+    assert_equal expected, Openkick.search("bear", models: [Cat, Product], per_page: 1).total_pages
   end
 
   # TODO move somewhere better
@@ -121,19 +121,19 @@ class InheritanceTest < Minitest::Test
   def test_multiple_indices
     store_names ["Product A"]
     store_names ["Product B"], Animal
-    assert_search "product", ["Product A", "Product B"], {models: [Product, Animal], conversions: false}, Searchkick
-    assert_search "product", ["Product A", "Product B"], {index_name: [Product, Animal], conversions: false}, Searchkick
+    assert_search "product", ["Product A", "Product B"], {models: [Product, Animal], conversions: false}, Openkick
+    assert_search "product", ["Product A", "Product B"], {index_name: [Product, Animal], conversions: false}, Openkick
   end
 
   def test_index_name_model
     store_names ["Product A"]
-    assert_equal ["Product A"], Searchkick.search("product", index_name: [Product]).map(&:name)
+    assert_equal ["Product A"], Openkick.search("product", index_name: [Product]).map(&:name)
   end
 
   def test_index_name_string
     store_names ["Product A"]
-    error = assert_raises Searchkick::Error do
-      Searchkick.search("product", index_name: [Product.searchkick_index.name]).map(&:name)
+    error = assert_raises Openkick::Error do
+      Openkick.search("product", index_name: [Product.openkick_index.name]).map(&:name)
     end
     assert_includes error.message, "Unknown model"
   end

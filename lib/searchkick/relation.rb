@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Relation
     NO_DEFAULT_VALUE = Object.new
 
@@ -28,7 +28,7 @@ module Searchkick
     end
 
     def execute
-      Searchkick.warn("The execute method is no longer needed")
+      Openkick.warn("The execute method is no longer needed")
       load
     end
 
@@ -46,7 +46,7 @@ module Searchkick
 
     # experimental
     def offset(value = NO_DEFAULT_VALUE)
-      # TODO remove in Searchkick 6
+      # TODO remove in Openkick 6
       if value == NO_DEFAULT_VALUE
         private_execute.offset
       else
@@ -75,7 +75,7 @@ module Searchkick
 
     # experimental
     def per_page(value = NO_DEFAULT_VALUE)
-      # TODO remove in Searchkick 6
+      # TODO remove in Openkick 6
       if value == NO_DEFAULT_VALUE
         private_execute.per_page
       else

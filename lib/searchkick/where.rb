@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Where
     def initialize(relation)
       @relation = relation

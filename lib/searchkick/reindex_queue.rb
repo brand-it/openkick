@@ -1,16 +1,16 @@
-module Searchkick
+module Openkick
   class ReindexQueue
     attr_reader :name
 
     def initialize(name)
       @name = name
 
-      raise Error, "Searchkick.redis not set" unless Searchkick.redis
+      raise Error, "Openkick.redis not set" unless Openkick.redis
     end
 
     # supports single and multiple ids
     def push(record_ids)
-      Searchkick.with_redis { |r| r.call("LPUSH", redis_key, record_ids) }
+      Openkick.with_redis { |r| r.call("LPUSH", redis_key, record_ids) }
     end
 
     def push_records(records)
@@ -34,10 +34,10 @@ module Searchkick
     # TODO use reliable queuing
     def reserve(limit: 1000)
       if supports_rpop_with_count?
-        Searchkick.with_redis { |r| r.call("RPOP", redis_key, limit) }.to_a
+        Openkick.with_redis { |r| r.call("RPOP", redis_key, limit) }.to_a
       else
         record_ids = []
-        Searchkick.with_redis do |r|
+        Openkick.with_redis do |r|
           while record_ids.size < limit && (record_id = r.call("RPOP", redis_key))
             record_ids << record_id
           end
@@ -47,17 +47,17 @@ module Searchkick
     end
 
     def clear
-      Searchkick.with_redis { |r| r.call("DEL", redis_key) }
+      Openkick.with_redis { |r| r.call("DEL", redis_key) }
     end
 
     def length
-      Searchkick.with_redis { |r| r.call("LLEN", redis_key) }
+      Openkick.with_redis { |r| r.call("LLEN", redis_key) }
     end
 
     private
 
     def redis_key
-      "searchkick:reindex_queue:#{name}"
+      "openkick:reindex_queue:#{name}"
     end
 
     def supports_rpop_with_count?
@@ -66,7 +66,7 @@ module Searchkick
 
     def redis_version
       @redis_version ||=
-        Searchkick.with_redis do |r|
+        Openkick.with_redis do |r|
           info = r.call("INFO")
           matches = /redis_version:(\S+)/.match(info)
           Gem::Version.new(matches[1])

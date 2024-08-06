@@ -1,7 +1,7 @@
-module Searchkick
+module Openkick
   module Model
-    def searchkick(**options)
-      options = Searchkick.model_options.merge(options)
+    def openkick(**options)
+      options = Openkick.model_options.merge(options)
 
       unknown_keywords = options.keys - [:_all, :_type, :batch_size, :callbacks, :case_sensitive, :conversions, :deep_paging, :default_fields,
         :filterable, :geo_shape, :highlight, :ignore_above, :index_name, :index_prefix, :inheritance, :language,
@@ -10,11 +10,11 @@ module Searchkick
         :text_middle, :text_start, :unscope, :word, :word_end, :word_middle, :word_start]
       raise ArgumentError, "unknown keywords: #{unknown_keywords.join(", ")}" if unknown_keywords.any?
 
-      raise "Only call searchkick once per model" if respond_to?(:searchkick_index)
+      raise "Only call openkick once per model" if respond_to?(:openkick_index)
 
-      Searchkick.models << self
+      Openkick.models << self
 
-      options[:_type] ||= -> { searchkick_index.klass_document_type(self, true) }
+      options[:_type] ||= -> { openkick_index.klass_document_type(self, true) }
       options[:class_name] = model_name.name
 
       callbacks = options.key?(:callbacks) ? options[:callbacks] : :inline
@@ -28,11 +28,11 @@ module Searchkick
       include(mod)
       mod.module_eval do
         def reindex(method_name = nil, mode: nil, refresh: false)
-          self.class.searchkick_index.reindex([self], method_name: method_name, mode: mode, refresh: refresh, single: true)
+          self.class.openkick_index.reindex([self], method_name: method_name, mode: mode, refresh: refresh, single: true)
         end unless base.method_defined?(:reindex)
 
         def similar(**options)
-          self.class.searchkick_index.similar_record(self, **options)
+          self.class.openkick_index.similar_record(self, **options)
         end unless base.method_defined?(:similar)
 
         def search_data
@@ -49,48 +49,48 @@ module Searchkick
       end
 
       class_eval do
-        cattr_reader :searchkick_options, :searchkick_klass, instance_reader: false
+        cattr_reader :openkick_options, :openkick_klass, instance_reader: false
 
-        class_variable_set :@@searchkick_options, options.dup
-        class_variable_set :@@searchkick_klass, self
-        class_variable_set :@@searchkick_index_cache, Searchkick::IndexCache.new
+        class_variable_set :@@openkick_options, options.dup
+        class_variable_set :@@openkick_klass, self
+        class_variable_set :@@openkick_index_cache, Openkick::IndexCache.new
 
         class << self
-          def searchkick_search(term = "*", **options, &block)
-            if Searchkick.relation?(self)
-              raise Searchkick::Error, "search must be called on model, not relation"
+          def openkick_search(term = "*", **options, &block)
+            if Openkick.relation?(self)
+              raise Openkick::Error, "search must be called on model, not relation"
             end
 
-            Searchkick.search(term, model: self, **options, &block)
+            Openkick.search(term, model: self, **options, &block)
           end
-          alias_method Searchkick.search_method_name, :searchkick_search if Searchkick.search_method_name
+          alias_method Openkick.search_method_name, :openkick_search if Openkick.search_method_name
 
-          def searchkick_index(name: nil)
-            index_name = name || searchkick_klass.searchkick_index_name
+          def openkick_index(name: nil)
+            index_name = name || openkick_klass.openkick_index_name
             index_name = index_name.call if index_name.respond_to?(:call)
-            index_cache = class_variable_get(:@@searchkick_index_cache)
-            index_cache.fetch(index_name) { Searchkick::Index.new(index_name, searchkick_options) }
+            index_cache = class_variable_get(:@@openkick_index_cache)
+            index_cache.fetch(index_name) { Openkick::Index.new(index_name, openkick_options) }
           end
-          alias_method :search_index, :searchkick_index unless method_defined?(:search_index)
+          alias_method :search_index, :openkick_index unless method_defined?(:search_index)
 
-          def searchkick_reindex(method_name = nil, **options)
-            searchkick_index.reindex(self, method_name: method_name, **options)
+          def openkick_reindex(method_name = nil, **options)
+            openkick_index.reindex(self, method_name: method_name, **options)
           end
-          alias_method :reindex, :searchkick_reindex unless method_defined?(:reindex)
+          alias_method :reindex, :openkick_reindex unless method_defined?(:reindex)
 
-          def searchkick_index_options
-            searchkick_index.index_options
+          def openkick_index_options
+            openkick_index.index_options
           end
 
-          def searchkick_index_name
-            @searchkick_index_name ||= begin
-              options = class_variable_get(:@@searchkick_options)
+          def openkick_index_name
+            @openkick_index_name ||= begin
+              options = class_variable_get(:@@openkick_options)
               if options[:index_name]
                 options[:index_name]
               elsif options[:index_prefix].respond_to?(:call)
-                -> { [options[:index_prefix].call, model_name.plural, Searchkick.env, Searchkick.index_suffix].compact.join("_") }
+                -> { [options[:index_prefix].call, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join("_") }
               else
-                [options.key?(:index_prefix) ? options[:index_prefix] : Searchkick.index_prefix, model_name.plural, Searchkick.env, Searchkick.index_suffix].compact.join("_")
+                [options.key?(:index_prefix) ? options[:index_prefix] : Openkick.index_prefix, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join("_")
               end
             end
           end
@@ -99,10 +99,10 @@ module Searchkick
         # always add callbacks, even when callbacks is false
         # so Model.callbacks block can be used
         if respond_to?(:after_commit)
-          after_commit :reindex, if: -> { Searchkick.callbacks?(default: callbacks) }
+          after_commit :reindex, if: -> { Openkick.callbacks?(default: callbacks) }
         elsif respond_to?(:after_save)
-          after_save :reindex, if: -> { Searchkick.callbacks?(default: callbacks) }
-          after_destroy :reindex, if: -> { Searchkick.callbacks?(default: callbacks) }
+          after_save :reindex, if: -> { Openkick.callbacks?(default: callbacks) }
+          after_destroy :reindex, if: -> { Openkick.callbacks?(default: callbacks) }
         end
       end
     end

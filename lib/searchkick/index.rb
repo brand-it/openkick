@@ -1,4 +1,4 @@
-module Searchkick
+module Openkick
   class Index
     attr_reader :name, :options
 
@@ -87,7 +87,7 @@ module Searchkick
         begin
           client.indices.get_alias(name: name).keys
         rescue => e
-          raise e unless Searchkick.not_found_error?(e)
+          raise e unless Openkick.not_found_error?(e)
           {}
         end
       actions = old_indices.map { |old_name| {remove: {index: old_name, alias: name}} } + [{add: {index: new_name, alias: name}}]
@@ -113,7 +113,7 @@ module Searchkick
             client.indices.get_aliases
           end
         rescue => e
-          raise e unless Searchkick.not_found_error?(e)
+          raise e unless Openkick.not_found_error?(e)
           {}
         end
       indices = indices.select { |_k, v| v.empty? || v["aliases"].empty? } if unaliased
@@ -185,18 +185,18 @@ module Searchkick
       options[:similar] = [RecordData.new(self, record).record_data]
       options[:models] ||= [record.class] unless options.key?(:model)
 
-      Searchkick.search("*", **options)
+      Openkick.search("*", **options)
     end
 
     def reload_synonyms
-      if Searchkick.opensearch?
+      if Openkick.opensearch?
         client.transport.perform_request "POST", "_plugins/_refresh_search_analyzers/#{CGI.escape(name)}"
       else
-        raise Error, "Requires Elasticsearch 7.3+" if Searchkick.server_below?("7.3.0")
+        raise Error, "Requires Elasticsearch 7.3+" if Openkick.server_below?("7.3.0")
         begin
           client.transport.perform_request("GET", "#{CGI.escape(name)}/_reload_search_analyzers")
         rescue => e
-          raise Error, "Requires non-OSS version of Elasticsearch" if Searchkick.not_allowed_error?(e)
+          raise Error, "Requires non-OSS version of Elasticsearch" if Openkick.not_allowed_error?(e)
           raise e
         end
       end
@@ -218,13 +218,13 @@ module Searchkick
         return reindex_records(object, method_name: method_name, **options)
       end
 
-      if !object.respond_to?(:searchkick_klass)
+      if !object.respond_to?(:openkick_klass)
         raise Error, "Cannot reindex object"
       end
 
-      scoped = Searchkick.relation?(object)
-      # call searchkick_klass for inheritance
-      relation = scoped ? object.all : Searchkick.scope(object.searchkick_klass).all
+      scoped = Openkick.relation?(object)
+      # call openkick_klass for inheritance
+      relation = scoped ? object.all : Openkick.scope(object.openkick_klass).all
 
       refresh = options.fetch(:refresh, !scoped)
       options.delete(:refresh)
@@ -242,11 +242,11 @@ module Searchkick
         if async
           if async.is_a?(Hash) && async[:wait]
             # TODO warn in 5.1
-            # Searchkick.warn "async option is deprecated - use mode: :async, wait: true instead"
+            # Openkick.warn "async option is deprecated - use mode: :async, wait: true instead"
             options[:wait] = true unless options.key?(:wait)
           else
             # TODO warn in 5.1
-            # Searchkick.warn "async option is deprecated - use mode: :async instead"
+            # Openkick.warn "async option is deprecated - use mode: :async instead"
           end
           options[:mode] ||= :async
         end
@@ -273,8 +273,8 @@ module Searchkick
     # private
     def klass_document_type(klass, ignore_type = false)
       @klass_document_type[[klass, ignore_type]] ||= begin
-        if !ignore_type && klass.searchkick_klass.searchkick_options[:_type]
-          type = klass.searchkick_klass.searchkick_options[:_type]
+        if !ignore_type && klass.openkick_klass.openkick_options[:_type]
+          type = klass.openkick_klass.openkick_options[:_type]
           type = type.call if type.respond_to?(:call)
           type
         else
@@ -312,19 +312,19 @@ module Searchkick
     protected
 
     def client
-      Searchkick.client
+      Openkick.client
     end
 
     def queue_index(records)
-      Searchkick.indexer.queue(records.map { |r| RecordData.new(self, r).index_data })
+      Openkick.indexer.queue(records.map { |r| RecordData.new(self, r).index_data })
     end
 
     def queue_delete(records)
-      Searchkick.indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(self, r).delete_data })
+      Openkick.indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(self, r).delete_data })
     end
 
     def queue_update(records, method_name)
-      Searchkick.indexer.queue(records.map { |r| RecordData.new(self, r).update_data(method_name) })
+      Openkick.indexer.queue(records.map { |r| RecordData.new(self, r).update_data(method_name) })
     end
 
     def relation_indexer
@@ -340,7 +340,7 @@ module Searchkick
     end
 
     def reindex_records(object, mode: nil, refresh: false, **options)
-      mode ||= Searchkick.callbacks_value || @options[:callbacks] || :inline
+      mode ||= Openkick.callbacks_value || @options[:callbacks] || :inline
       mode = :inline if mode == :bulk
 
       result = RecordIndexer.new(self).reindex(object, mode: mode, full: false, **options)
@@ -352,8 +352,8 @@ module Searchkick
     # http://www.elasticsearch.org/blog/changing-mapping-with-zero-downtime/
     def full_reindex(relation, import: true, resume: false, retain: false, mode: nil, refresh_interval: nil, scope: nil, wait: nil)
       raise ArgumentError, "wait only available in :async mode" if !wait.nil? && mode != :async
-      # TODO raise ArgumentError in Searchkick 6
-      Searchkick.warn("Full reindex does not support :queue mode - use :async mode instead") if mode == :queue
+      # TODO raise ArgumentError in Openkick 6
+      Openkick.warn("Full reindex does not support :queue mode - use :async mode instead") if mode == :queue
 
       if resume
         index_name = all_indices.sort.last
@@ -362,7 +362,7 @@ module Searchkick
       else
         clean_indices unless retain
 
-        index_options = relation.searchkick_index_options
+        index_options = relation.openkick_index_options
         index_options.deep_merge!(settings: {index: {refresh_interval: refresh_interval}}) if refresh_interval
         index = create_index(index_options: index_options)
       end
@@ -401,7 +401,7 @@ module Searchkick
           puts "Jobs queued. Waiting..."
           loop do
             sleep 3
-            status = Searchkick.reindex_status(index.name)
+            status = Openkick.reindex_status(index.name)
             break if status[:completed]
             puts "Batches left: #{status[:batches_left]}"
           end
@@ -421,7 +421,7 @@ module Searchkick
         true
       end
     rescue => e
-      if Searchkick.transport_error?(e) && (e.message.include?("No handler for type [text]") || e.message.include?("class java.util.ArrayList cannot be cast to class java.util.Map"))
+      if Openkick.transport_error?(e) && (e.message.include?("No handler for type [text]") || e.message.include?("class java.util.ArrayList cannot be cast to class java.util.Map"))
         raise UnsupportedVersionError
       end
 
@@ -439,29 +439,29 @@ module Searchkick
     end
 
     def notify(record, name)
-      if Searchkick.callbacks_value == :bulk
+      if Openkick.callbacks_value == :bulk
         yield
       else
-        name = "#{record.class.searchkick_klass.name} #{name}" if record && record.class.searchkick_klass
+        name = "#{record.class.openkick_klass.name} #{name}" if record && record.class.openkick_klass
         event = {
           name: name,
           id: search_id(record)
         }
-        ActiveSupport::Notifications.instrument("request.searchkick", event) do
+        ActiveSupport::Notifications.instrument("request.openkick", event) do
           yield
         end
       end
     end
 
     def notify_bulk(records, name)
-      if Searchkick.callbacks_value == :bulk
+      if Openkick.callbacks_value == :bulk
         yield
       else
         event = {
-          name: "#{records.first.class.searchkick_klass.name} #{name}",
+          name: "#{records.first.class.openkick_klass.name} #{name}",
           count: records.size
         }
-        ActiveSupport::Notifications.instrument("request.searchkick", event) do
+        ActiveSupport::Notifications.instrument("request.openkick", event) do
           yield
         end
       end

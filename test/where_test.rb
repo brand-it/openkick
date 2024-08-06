@@ -167,11 +167,11 @@ class WhereTest < Minitest::Test
       {name: "Product B"}
     ]
     assert_search "product", ["Product A"], where: {user_ids: {exists: true}}
-    # TODO add support for false in Searchkick 6
+    # TODO add support for false in Openkick 6
     assert_warns "Passing a value other than true to exists is not supported" do
       assert_search "product", ["Product A"], where: {user_ids: {exists: false}}
     end
-    # TODO raise error in Searchkick 6
+    # TODO raise error in Openkick 6
     assert_warns "Passing a value other than true to exists is not supported" do
       assert_search "product", ["Product A"], where: {user_ids: {exists: nil}}
     end
@@ -261,16 +261,16 @@ class WhereTest < Minitest::Test
       {name: "Product A", store_id: 1},
       {name: "Product B", store_id: 10}
     ]
-    assert_search "product", ["Product A"], where: {_raw: Searchkick.raw({script: {script: "doc['store_id'].value < 10"}})}
-    assert_search "product", ["Product A"], where: {_raw: Searchkick.raw({script: {script: {source: "doc['store_id'].value < 10", lang: "expression"}}})}
-    assert_search "product", ["Product A"], where: {_raw: Searchkick.raw({script: {script: {source: "doc['store_id'].value < params['value']", params: {value: 10}}}})}
+    assert_search "product", ["Product A"], where: {_raw: Openkick.raw({script: {script: "doc['store_id'].value < 10"}})}
+    assert_search "product", ["Product A"], where: {_raw: Openkick.raw({script: {script: {source: "doc['store_id'].value < 10", lang: "expression"}}})}
+    assert_search "product", ["Product A"], where: {_raw: Openkick.raw({script: {script: {source: "doc['store_id'].value < params['value']", params: {value: 10}}}})}
   end
 
   def test_script_string
     error = assert_raises(TypeError) do
       assert_search "product", ["Product A"], where: {_raw: {script: {script: "doc['store_id'].value < 10"}}}
     end
-    assert_equal "Use Searchkick.raw for raw filters", error.message
+    assert_equal "Use Openkick.raw for raw filters", error.message
   end
 
   def test_where_string
@@ -373,12 +373,12 @@ class WhereTest < Minitest::Test
       assert_search "san", ["San Francisco", "San Antonio"], where: {location: {geo_polygon: {points: polygon}}}
     end
     # only warns for elasticsearch gem < 8
-    # unless Searchkick.server_below?("7.12.0")
+    # unless Openkick.server_below?("7.12.0")
     #   assert_match "Deprecated field [geo_polygon] used", stderr
     # end
 
     # Field [location] is not of type [geo_shape] but of type [geo_point] error for previous versions
-    unless Searchkick.server_below?("7.14.0")
+    unless Openkick.server_below?("7.14.0")
       polygon << polygon.first
       # see test/geo_shape_test.rb for other geo_shape tests
       assert_search "san", ["San Francisco", "San Antonio"], where: {location: {geo_shape: {type: "polygon", coordinates: [polygon]}}}
@@ -450,6 +450,6 @@ class WhereTest < Minitest::Test
   end
 
   def case_insensitive_supported?
-    !Searchkick.server_below?("7.10.0")
+    !Openkick.server_below?("7.10.0")
   end
 end

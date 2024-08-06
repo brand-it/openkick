@@ -5,7 +5,7 @@ class Store
     }
   }
 
-  searchkick \
+  openkick \
     routing: true,
     merge_mappings: true,
     mappings: mappings
