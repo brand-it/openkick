@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name          = "openkick"
   spec.version       = Openkick::VERSION
   spec.summary       = "Intelligent search made easy with Rails and Elasticsearch or OpenSearch"
-  spec.homepage      = "https://github.com/ankane/openkick"
+  spec.homepage      = "https://github.com/brandit/openkick"
   spec.license       = "MIT"
 
   spec.author        = "Andrew Kane"

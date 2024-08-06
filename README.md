@@ -22,11 +22,11 @@ Plus:
 - supports many languages
 - works with Active Record and Mongoid
 
-Check out [Searchjoy](https://github.com/ankane/searchjoy) for analytics and [Autosuggest](https://github.com/ankane/autosuggest) for query suggestions
+Check out [Searchjoy](https://github.com/brandit/searchjoy) for analytics and [Autosuggest](https://github.com/brandit/autosuggest) for query suggestions
 
 :tangerine: Battle-tested at [Instacart](https://www.instacart.com/opensource)
 
-[![Build Status](https://github.com/ankane/openkick/actions/workflows/build.yml/badge.svg)](https://github.com/ankane/openkick/actions)
+[![Build Status](https://github.com/brandit/openkick/actions/workflows/build.yml/badge.svg)](https://github.com/brandit/openkick/actions)
 
 ## Contents
 
@@ -64,7 +64,7 @@ gem "elasticsearch"   # select one
 gem "opensearch-ruby" # select one
 ```
 
-The latest version works with Elasticsearch 7 and 8 and OpenSearch 1 and 2. For Elasticsearch 6, use version 4.6.3 and [this readme](https://github.com/ankane/openkick/blob/v4.6.3/README.md).
+The latest version works with Elasticsearch 7 and 8 and OpenSearch 1 and 2. For Elasticsearch 6, use version 4.6.3 and [this readme](https://github.com/brandit/openkick/blob/v4.6.3/README.md).
 
 Add openkick to models you want to search.
 
@@ -666,13 +666,13 @@ end
 
 ## Intelligent Search
 
-The best starting point to improve your search **by far** is to track searches and conversions. [Searchjoy](https://github.com/ankane/searchjoy) makes it easy.
+The best starting point to improve your search **by far** is to track searches and conversions. [Searchjoy](https://github.com/brandit/searchjoy) makes it easy.
 
 ```ruby
 Product.search("apple", track: {user_id: current_user.id})
 ```
 
-[See the docs](https://github.com/ankane/searchjoy) for how to install and use. Focus on top searches with a low conversion rate.
+[See the docs](https://github.com/brandit/searchjoy) for how to install and use. Focus on top searches with a low conversion rate.
 
 Openkick can then use the conversion data to learn what users are looking for. If a user searches for “ice cream” and adds Ben & Jerry’s Chunky Monkey to the cart (our conversion metric at Instacart), that item gets a little more weight for similar searches. This can make a huge difference on the quality of your search.
 
@@ -815,9 +815,9 @@ Product.search("milk", boost_where: {orderer_ids: current_user.id})
 
 Autocomplete predicts what a user will type, making the search experience faster and easier.
 
-![Autocomplete](https://gist.githubusercontent.com/ankane/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/autocomplete.png)
+![Autocomplete](https://gist.githubusercontent.com/brandit/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/autocomplete.png)
 
-**Note:** To autocomplete on search terms rather than results, check out [Autosuggest](https://github.com/ankane/autosuggest).
+**Note:** To autocomplete on search terms rather than results, check out [Autosuggest](https://github.com/brandit/autosuggest).
 
 **Note 2:** If you only have a few thousand records, don’t use Openkick for autocomplete. It’s *much* faster to load all records into JavaScript and autocomplete there (eliminates network requests).
 
@@ -881,7 +881,7 @@ Then add the search box and JavaScript code to a view.
 
 ## Suggestions
 
-![Suggest](https://gist.githubusercontent.com/ankane/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/recursion.png)
+![Suggest](https://gist.githubusercontent.com/brandit/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/recursion.png)
 
 ```ruby
 class Product < ApplicationRecord
@@ -900,7 +900,7 @@ products.suggestions # ["peanut butter"]
 
 [Aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html) provide aggregated search data.
 
-![Aggregations](https://gist.githubusercontent.com/ankane/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/facets.png)
+![Aggregations](https://gist.githubusercontent.com/brandit/b6988db2802aca68a589b31e41b44195/raw/40febe948427e5bc53ec4e5dc248822855fef76f/facets.png)
 
 ```ruby
 products = Product.search("chuck taylor", aggs: [:product_type, :gender, :brand])
@@ -1336,16 +1336,16 @@ FactoryBot.create(:product, :some_trait, :reindex, some_attribute: "foo")
 
 ### GitHub Actions
 
-Check out [setup-elasticsearch](https://github.com/ankane/setup-elasticsearch) for an easy way to install Elasticsearch:
+Check out [setup-elasticsearch](https://github.com/brandit/setup-elasticsearch) for an easy way to install Elasticsearch:
 
 ```yml
-    - uses: ankane/setup-elasticsearch@v1
+    - uses: brandit/setup-elasticsearch@v1
 ```
 
-And [setup-opensearch](https://github.com/ankane/setup-opensearch) for an easy way to install OpenSearch:
+And [setup-opensearch](https://github.com/brandit/setup-opensearch) for an easy way to install OpenSearch:
 
 ```yml
-    - uses: ankane/setup-opensearch@v1
+    - uses: brandit/setup-opensearch@v1
 ```
 
 ## Deployment
@@ -1505,7 +1505,7 @@ config.lograge.custom_options = lambda do |event|
 end
 ```
 
-See [Production Rails](https://github.com/ankane/production_rails) for other good practices.
+See [Production Rails](https://github.com/brandit/production_rails) for other good practices.
 
 ## Performance
 
@@ -2162,11 +2162,11 @@ store.products.reindex(mode: :queue)
 
 And there’s a [new option](#default-scopes) for models with default scopes.
 
-Check out the [changelog](https://github.com/ankane/openkick/blob/master/CHANGELOG.md#500-2022-02-21) for the full list of changes.
+Check out the [changelog](https://github.com/brandit/openkick/blob/master/CHANGELOG.md#500-2022-02-21) for the full list of changes.
 
 ## History
 
-View the [changelog](https://github.com/ankane/openkick/blob/master/CHANGELOG.md).
+View the [changelog](https://github.com/brandit/openkick/blob/master/CHANGELOG.md).
 
 ## Thanks
 
@@ -2176,15 +2176,15 @@ Thanks to Karel Minarik for [Elasticsearch Ruby](https://github.com/elasticsearc
 
 Everyone is encouraged to help improve this project. Here are a few ways you can help:
 
-- [Report bugs](https://github.com/ankane/openkick/issues)
-- Fix bugs and [submit pull requests](https://github.com/ankane/openkick/pulls)
+- [Report bugs](https://github.com/brandit/openkick/issues)
+- Fix bugs and [submit pull requests](https://github.com/brandit/openkick/pulls)
 - Write, clarify, or fix documentation
 - Suggest or add new features
 
 To get started with development:
 
 ```sh
-git clone https://github.com/ankane/openkick.git
+git clone https://github.com/brandit/openkick.git
 cd openkick
 bundle install
 bundle exec rake test

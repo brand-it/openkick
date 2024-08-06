@@ -358,7 +358,7 @@ Breaking changes
 
 ## 2.2.0 (2017-03-19)
 
-- Fixed bug with text values longer than 256 characters and `_all` field - see [#850](https://github.com/ankane/openkick/issues/850)
+- Fixed bug with text values longer than 256 characters and `_all` field - see [#850](https://github.com/brandit/openkick/issues/850)
 - Fixed issue with `_all` field in `searchable`
 - Fixed `exclude` option with `word_start`
 
