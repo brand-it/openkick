@@ -1,57 +1,64 @@
-require_relative "test_helper"
+require_relative 'test_helper'
 
 class QueryTest < Minitest::Test
   def test_basic
-    store_names ["Milk", "Apple"]
-    query = Product.search("milk", body: {query: {match_all: {}}})
-    assert_equal ["Apple", "Milk"], query.map(&:name).sort
+    store_names %w[Milk Apple]
+    query = Product.search('milk', body: { query: { match_all: {} } })
+
+    assert_equal %w[Apple Milk], query.map(&:name).sort
   end
 
   def test_with_uneffective_min_score
-    store_names ["Milk", "Milk2"]
-    assert_search "milk", ["Milk", "Milk2"], body_options: {min_score: 0.0001}
+    store_names %w[Milk Milk2]
+
+    assert_search 'milk', %w[Milk Milk2], body_options: { min_score: 0.0001 }
   end
 
   def test_default_timeout
-    assert_equal "6000ms", Product.search("*").body[:timeout]
+    assert_equal '6000ms', Product.search('*').body[:timeout]
   end
 
   def test_timeout_override
-    assert_equal "1s", Product.search("*", body_options: {timeout: "1s"}).body[:timeout]
+    assert_equal '1s', Product.search('*', body_options: { timeout: '1s' }).body[:timeout]
   end
 
   def test_request_params
-    assert_equal "dfs_query_then_fetch", Product.search("*", request_params: {search_type: "dfs_query_then_fetch"}).params[:search_type]
+    assert_equal 'dfs_query_then_fetch',
+                 Product.search('*', request_params: { search_type: 'dfs_query_then_fetch' }).params[:search_type]
   end
 
   def test_debug
-    store_names ["Milk"]
-    out, _ = capture_io do
-      assert_search "milk", ["Milk"], debug: true
+    store_names ['Milk']
+    out, = capture_io do
+      assert_search 'milk', ['Milk'], debug: true
     end
-    refute_includes out, "Error"
+
+    refute_includes out, 'Error'
   end
 
   def test_big_decimal
     store [
-      {name: "Product", latitude: 80.0}
+      { name: 'Product', latitude: 80.0 }
     ]
-    assert_search "product", ["Product"], where: {latitude: {gt: 79}}
+
+    assert_search 'product', ['Product'], where: { latitude: { gt: 79 } }
   end
 
   # body_options
 
   def test_body_options_should_merge_into_body
-    query = Product.search("*", body_options: {min_score: 1.0})
-    assert_equal 1.0, query.body[:min_score]
+    query = Product.search('*', body_options: { min_score: 1.0 })
+
+    assert_in_delta(1.0, query.body[:min_score])
   end
 
   # nested
 
   def test_nested_search
     setup_speaker
-    store [{name: "Product A", aisle: {"id" => 1, "name" => "Frozen"}}], Speaker
-    assert_search "frozen", ["Product A"], {fields: ["aisle.name"]}, Speaker
+    store [{ name: 'Product A', aisle: { 'id' => 1, 'name' => 'Frozen' } }], Speaker
+
+    assert_search 'frozen', ['Product A'], { fields: ['aisle.name'] }, Speaker
   end
 
   # other tests
@@ -59,33 +66,34 @@ class QueryTest < Minitest::Test
   def test_includes
     skip unless activerecord?
 
-    store_names ["Product A"]
-    assert Product.search("product", includes: [:store]).first.association(:store).loaded?
-    assert Product.search("product").includes(:store).first.association(:store).loaded?
+    store_names ['Product A']
+
+    assert_predicate Product.search('product', includes: [:store]).first.association(:store), :loaded?
+    assert_predicate Product.search('product').includes(:store).first.association(:store), :loaded?
   end
 
   def test_model_includes
     skip unless activerecord?
 
-    store_names ["Product A"]
-    store_names ["Store A"], Store
+    store_names ['Product A']
+    store_names ['Store A'], Store
 
-    associations = {Product => [:store], Store => [:products]}
-    result = Openkick.search("*", models: [Product, Store], model_includes: associations)
+    associations = { Product => [:store], Store => [:products] }
+    result = Openkick.search('*', models: [Product, Store], model_includes: associations)
 
     assert_equal 2, result.length
 
     result.group_by(&:class).each_pair do |model, records|
-      assert records.first.association(associations[model].first).loaded?
+      assert_predicate records.first.association(associations[model].first), :loaded?
     end
   end
 
   def test_scope_results
     skip unless activerecord?
 
-    store_names ["Product A", "Product B"]
-    assert_warns "Records in search index do not exist in database" do
-      assert_search "product", ["Product A"], scope_results: ->(r) { r.where(name: "Product A") }
+    store_names ['Product A', 'Product B']
+    assert_warns 'Records in search index do not exist in database' do
+      assert_search 'product', ['Product A'], scope_results: ->(r) { r.where(name: 'Product A') }
     end
   end
 end

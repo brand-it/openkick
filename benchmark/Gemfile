@@ -1,22 +1,22 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gemspec path: "../"
+gemspec path: '../'
 
-gem "sqlite3"
-gem "pg"
-gem "activerecord", "~> 6.1.0"
-gem "activejob"
-gem "redis"
-gem "sidekiq"
+gem 'activejob'
+gem 'activerecord', '~> 6.1.0'
+gem 'pg'
+gem 'redis'
+gem 'sidekiq'
+gem 'sqlite3'
 
 # performance
-gem "typhoeus"
-gem "oj"
+gem 'oj'
+gem 'typhoeus'
 
 # profiling
-gem "ruby-prof"
-gem "allocation_stats"
-gem "get_process_mem"
-gem "memory_profiler"
-gem "allocation_tracer"
-gem "benchmark-ips"
+gem 'allocation_stats'
+gem 'allocation_tracer'
+gem 'benchmark-ips'
+gem 'get_process_mem'
+gem 'memory_profiler'
+gem 'ruby-prof'

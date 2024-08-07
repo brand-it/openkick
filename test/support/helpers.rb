@@ -23,7 +23,7 @@ class Minitest::Test
 
   def setup_model(model)
     # reindex once
-    ($setup_model ||= {})[model] ||= (model.reindex || true)
+    ($setup_model ||= {})[model] ||= model.reindex || true
 
     # clear every time
     Openkick.callbacks(:bulk) do
@@ -49,7 +49,7 @@ class Minitest::Test
   end
 
   def store_names(names, model = default_model, reindex: true)
-    store names.map { |name| {name: name} }, model, reindex: reindex
+    store names.map { |name| { name: } }, model, reindex:
   end
 
   # no order
@@ -70,7 +70,7 @@ class Minitest::Test
   end
 
   def assert_equal_scores(term, options = {}, model = default_model)
-    assert_equal 1, model.search(term, **options).hits.map { |a| a["_score"] }.uniq.size
+    assert_equal 1, model.search(term, **options).hits.map { |a| a['_score'] }.uniq.size
   end
 
   def assert_first(term, expected, options = {}, model = default_model)
@@ -79,16 +79,16 @@ class Minitest::Test
 
   def assert_misspellings(term, expected, misspellings = {}, model = default_model)
     options = {
-      fields: [:name, :color],
-      misspellings: misspellings
+      fields: %i[name color],
+      misspellings:
     }
+
     assert_search(term, expected, options, model)
   end
 
-  def assert_warns(message)
-    _, stderr = capture_io do
-      yield
-    end
+  def assert_warns(message, &)
+    _, stderr = capture_io(&)
+
     assert_match "[openkick] WARNING: #{message}", stderr
   end
 
@@ -106,17 +106,17 @@ class Minitest::Test
     end
   end
 
-  def with_callbacks(value, &block)
+  def with_callbacks(value, &)
     if Openkick.callbacks?(default: nil).nil?
-      Openkick.callbacks(value, &block)
+      Openkick.callbacks(value, &)
     else
       yield
     end
   end
 
-  def with_transaction(model, &block)
+  def with_transaction(model, &)
     if model.respond_to?(:transaction) && !mongoid?
-      model.transaction(&block)
+      model.transaction(&)
     else
       yield
     end
@@ -135,10 +135,9 @@ class Minitest::Test
   end
 
   def ci?
-    ENV["CI"]
+    ENV.fetch('CI', nil)
   end
 
   # for Active Job helpers
-  def tagged_logger
-  end
+  def tagged_logger; end
 end

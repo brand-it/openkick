@@ -7,15 +7,15 @@ module Openkick
     end
 
     def perform
-      if queries.any?
-        perform_search(queries)
-      end
+      return unless queries.any?
+
+      perform_search(queries)
     end
 
     private
 
     def perform_search(search_queries, perform_retry: true)
-      responses = client.msearch(body: search_queries.flat_map { |q| [q.params.except(:body), q.body] })["responses"]
+      responses = client.msearch(body: search_queries.flat_map { |q| [q.params.except(:body), q.body] })['responses']
 
       retry_queries = []
       search_queries.each_with_index do |query, i|
@@ -27,9 +27,7 @@ module Openkick
         end
       end
 
-      if retry_queries.any?
-        perform_search(retry_queries, perform_retry: false)
-      end
+      perform_search(retry_queries, perform_retry: false) if retry_queries.any?
 
       search_queries
     end

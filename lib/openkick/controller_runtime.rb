@@ -32,7 +32,7 @@ module Openkick
       def log_process_action(payload)
         messages = super
         runtime = payload[:openkick_runtime]
-        messages << ("Openkick: %.1fms" % runtime.to_f) if runtime.to_f > 0
+        messages << (format('Openkick: %.1fms', runtime.to_f)) if runtime.to_f > 0
         messages
       end
     end

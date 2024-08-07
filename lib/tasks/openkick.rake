@@ -1,8 +1,8 @@
 namespace :openkick do
-  desc "reindex a model (specify CLASS)"
+  desc 'reindex a model (specify CLASS)'
   task reindex: :environment do
-    class_name = ENV["CLASS"]
-    abort "USAGE: rake openkick:reindex CLASS=Product" unless class_name
+    class_name = ENV.fetch('CLASS', nil)
+    abort 'USAGE: rake openkick:reindex CLASS=Product' unless class_name
 
     model =
       begin
@@ -13,11 +13,11 @@ namespace :openkick do
 
     puts "Reindexing #{model.name}..."
     model.reindex
-    puts "Reindex successful"
+    puts 'Reindex successful'
   end
 
   namespace :reindex do
-    desc "reindex all models"
+    desc 'reindex all models'
     task all: :environment do
       # eager load models to populate Openkick.models
       if Rails.respond_to?(:autoloaders) && Rails.autoloaders.zeitwerk_enabled?
@@ -31,7 +31,7 @@ namespace :openkick do
         puts "Reindexing #{model.name}..."
         model.reindex
       end
-      puts "Reindex complete"
+      puts 'Reindex complete'
     end
   end
 end

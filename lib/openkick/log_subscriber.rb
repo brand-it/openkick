@@ -22,7 +22,7 @@ module Openkick
       payload = event.payload
       name = "#{payload[:name]} (#{event.duration.round(1)}ms)"
 
-      index = payload[:query][:index].is_a?(Array) ? payload[:query][:index].join(",") : payload[:query][:index]
+      index = payload[:query][:index].is_a?(Array) ? payload[:query][:index].join(',') : payload[:query][:index]
       type = payload[:query][:type]
       request_params = payload[:query].except(:index, :type, :body)
 

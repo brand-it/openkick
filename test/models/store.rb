@@ -1,14 +1,13 @@
 class Store
   mappings = {
     properties: {
-      name: {type: "text"}
+      name: { type: 'text' }
     }
   }
 
-  openkick \
-    routing: true,
-    merge_mappings: true,
-    mappings: mappings
+  openkick(routing: true,
+           merge_mappings: true,
+           mappings:)
 
   def search_document_id
     id

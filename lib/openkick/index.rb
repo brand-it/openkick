@@ -13,13 +13,13 @@ module Openkick
     end
 
     def create(body = {})
-      client.indices.create index: name, body: body
+      client.indices.create index: name, body:
     end
 
     def delete
       if alias_exists?
         # can't call delete directly on aliases in ES 6
-        indices = client.indices.get_alias(name: name).keys
+        indices = client.indices.get_alias(name:).keys
         client.indices.delete index: indices
       else
         client.indices.delete index: name
@@ -35,7 +35,7 @@ module Openkick
     end
 
     def alias_exists?
-      client.indices.exists_alias name: name
+      client.indices.exists_alias name:
     end
 
     # call to_h for consistent results between elasticsearch gem 7 and 8
@@ -50,7 +50,7 @@ module Openkick
     end
 
     def refresh_interval
-      index_settings["refresh_interval"]
+      index_settings['refresh_interval']
     end
 
     def update_settings(settings)
@@ -58,7 +58,7 @@ module Openkick
     end
 
     def tokens(text, options = {})
-      client.indices.analyze(body: {text: text}.merge(options), index: name)["tokens"].map { |t| t["token"] }
+      client.indices.analyze(body: { text: }.merge(options), index: name)['tokens'].map { |t| t['token'] }
     end
 
     def total_docs
@@ -66,7 +66,7 @@ module Openkick
         client.search(
           index: name,
           body: {
-            query: {match_all: {}},
+            query: { match_all: {} },
             size: 0,
             track_total_hits: true
           }
@@ -79,29 +79,30 @@ module Openkick
       if update_refresh_interval
         new_index = Index.new(new_name, @options)
         settings = options[:settings] || {}
-        refresh_interval = (settings[:index] && settings[:index][:refresh_interval]) || "1s"
-        new_index.update_settings(index: {refresh_interval: refresh_interval})
+        refresh_interval = (settings[:index] && settings[:index][:refresh_interval]) || '1s'
+        new_index.update_settings(index: { refresh_interval: })
       end
 
       old_indices =
         begin
-          client.indices.get_alias(name: name).keys
-        rescue => e
+          client.indices.get_alias(name:).keys
+        rescue StandardError => e
           raise e unless Openkick.not_found_error?(e)
+
           {}
         end
-      actions = old_indices.map { |old_name| {remove: {index: old_name, alias: name}} } + [{add: {index: new_name, alias: name}}]
-      client.indices.update_aliases body: {actions: actions}
+      actions = old_indices.map { |old_name| { remove: { index: old_name, alias: name } } } + [{ add: { index: new_name, alias: name } }]
+      client.indices.update_aliases body: { actions: }
     end
-    alias_method :swap, :promote
+    alias swap promote
 
     def retrieve(record)
       record_data = RecordData.new(self, record).record_data
 
       # remove underscore
-      get_options = record_data.to_h { |k, v| [k.to_s.delete_prefix("_").to_sym, v] }
+      get_options = record_data.to_h { |k, v| [k.to_s.delete_prefix('_').to_sym, v] }
 
-      client.get(get_options)["_source"]
+      client.get(get_options)['_source']
     end
 
     def all_indices(unaliased: false)
@@ -112,11 +113,12 @@ module Openkick
           else
             client.indices.get_aliases
           end
-        rescue => e
+        rescue StandardError => e
           raise e unless Openkick.not_found_error?(e)
+
           {}
         end
-      indices = indices.select { |_k, v| v.empty? || v["aliases"].empty? } if unaliased
+      indices = indices.select { |_k, v| v.empty? || v['aliases'].empty? } if unaliased
       indices.select { |k, _v| k =~ /\A#{Regexp.escape(name)}_\d{14,17}\z/ }.keys
     end
 
@@ -130,19 +132,19 @@ module Openkick
     end
 
     def store(record)
-      notify(record, "Store") do
+      notify(record, 'Store') do
         queue_index([record])
       end
     end
 
     def remove(record)
-      notify(record, "Remove") do
+      notify(record, 'Remove') do
         queue_delete([record])
       end
     end
 
     def update_record(record, method_name)
-      notify(record, "Update") do
+      notify(record, 'Update') do
         queue_update([record], method_name)
       end
     end
@@ -150,7 +152,7 @@ module Openkick
     def bulk_delete(records)
       return if records.empty?
 
-      notify_bulk(records, "Delete") do
+      notify_bulk(records, 'Delete') do
         queue_delete(records)
       end
     end
@@ -158,16 +160,16 @@ module Openkick
     def bulk_index(records)
       return if records.empty?
 
-      notify_bulk(records, "Import") do
+      notify_bulk(records, 'Import') do
         queue_index(records)
       end
     end
-    alias_method :import, :bulk_index
+    alias import bulk_index
 
     def bulk_update(records, method_name)
       return if records.empty?
 
-      notify_bulk(records, "Update") do
+      notify_bulk(records, 'Update') do
         queue_update(records, method_name)
       end
     end
@@ -185,18 +187,20 @@ module Openkick
       options[:similar] = [RecordData.new(self, record).record_data]
       options[:models] ||= [record.class] unless options.key?(:model)
 
-      Openkick.search("*", **options)
+      Openkick.search('*', **options)
     end
 
     def reload_synonyms
       if Openkick.opensearch?
-        client.transport.perform_request "POST", "_plugins/_refresh_search_analyzers/#{CGI.escape(name)}"
+        client.transport.perform_request 'POST', "_plugins/_refresh_search_analyzers/#{CGI.escape(name)}"
       else
-        raise Error, "Requires Elasticsearch 7.3+" if Openkick.server_below?("7.3.0")
+        raise Error, 'Requires Elasticsearch 7.3+' if Openkick.server_below?('7.3.0')
+
         begin
-          client.transport.perform_request("GET", "#{CGI.escape(name)}/_reload_search_analyzers")
-        rescue => e
-          raise Error, "Requires non-OSS version of Elasticsearch" if Openkick.not_allowed_error?(e)
+          client.transport.perform_request('GET', "#{CGI.escape(name)}/_reload_search_analyzers")
+        rescue StandardError => e
+          raise Error, 'Requires non-OSS version of Elasticsearch' if Openkick.not_allowed_error?(e)
+
           raise e
         end
       end
@@ -210,17 +214,15 @@ module Openkick
 
     # reindex
 
-    # note: this is designed to be used internally
+    # NOTE: this is designed to be used internally
     # so it does not check object matches index class
     def reindex(object, method_name: nil, full: false, **options)
       if object.is_a?(Array)
-        # note: purposefully skip full
-        return reindex_records(object, method_name: method_name, **options)
+        # NOTE: purposefully skip full
+        return reindex_records(object, method_name:, **options)
       end
 
-      if !object.respond_to?(:openkick_klass)
-        raise Error, "Cannot reindex object"
-      end
+      raise Error, 'Cannot reindex object' unless object.respond_to?(:openkick_klass)
 
       scoped = Openkick.relation?(object)
       # call openkick_klass for inheritance
@@ -231,21 +233,21 @@ module Openkick
 
       if method_name || (scoped && !full)
         mode = options.delete(:mode) || :inline
-        raise ArgumentError, "unsupported keywords: #{options.keys.map(&:inspect).join(", ")}" if options.any?
+        raise ArgumentError, "unsupported keywords: #{options.keys.map(&:inspect).join(', ')}" if options.any?
 
         # import only
-        import_scope(relation, method_name: method_name, mode: mode)
+        import_scope(relation, method_name:, mode:)
         self.refresh if refresh
         true
       else
         async = options.delete(:async)
         if async
           if async.is_a?(Hash) && async[:wait]
-            # TODO warn in 5.1
+            # TODO: warn in 5.1
             # Openkick.warn "async option is deprecated - use mode: :async, wait: true instead"
             options[:wait] = true unless options.key?(:wait)
           else
-            # TODO warn in 5.1
+            # TODO: warn in 5.1
             # Openkick.warn "async option is deprecated - use mode: :async instead"
           end
           options[:mode] ||= :async
@@ -272,15 +274,13 @@ module Openkick
 
     # private
     def klass_document_type(klass, ignore_type = false)
-      @klass_document_type[[klass, ignore_type]] ||= begin
-        if !ignore_type && klass.openkick_klass.openkick_options[:_type]
-          type = klass.openkick_klass.openkick_options[:_type]
-          type = type.call if type.respond_to?(:call)
-          type
-        else
-          klass.model_name.to_s.underscore
-        end
-      end
+      @klass_document_type[[klass, ignore_type]] ||= if !ignore_type && klass.openkick_klass.openkick_options[:_type]
+                                                       type = klass.openkick_klass.openkick_options[:_type]
+                                                       type = type.call if type.respond_to?(:call)
+                                                       type
+                                                     else
+                                                       klass.model_name.to_s.underscore
+                                                     end
     end
 
     # private
@@ -306,7 +306,7 @@ module Openkick
 
     # private
     def uuid
-      index_settings["uuid"]
+      index_settings['uuid']
     end
 
     protected
@@ -332,7 +332,7 @@ module Openkick
     end
 
     def index_settings
-      settings.values.first["settings"]["index"]
+      settings.values.first['settings']['index']
     end
 
     def import_before_promotion(index, relation, **import_options)
@@ -343,7 +343,7 @@ module Openkick
       mode ||= Openkick.callbacks_value || @options[:callbacks] || :inline
       mode = :inline if mode == :bulk
 
-      result = RecordIndexer.new(self).reindex(object, mode: mode, full: false, **options)
+      result = RecordIndexer.new(self).reindex(object, mode:, full: false, **options)
       self.refresh if refresh
       result
     end
@@ -351,27 +351,29 @@ module Openkick
     # https://gist.github.com/jarosan/3124884
     # http://www.elasticsearch.org/blog/changing-mapping-with-zero-downtime/
     def full_reindex(relation, import: true, resume: false, retain: false, mode: nil, refresh_interval: nil, scope: nil, wait: nil)
-      raise ArgumentError, "wait only available in :async mode" if !wait.nil? && mode != :async
-      # TODO raise ArgumentError in Openkick 6
-      Openkick.warn("Full reindex does not support :queue mode - use :async mode instead") if mode == :queue
+      raise ArgumentError, 'wait only available in :async mode' if !wait.nil? && mode != :async
+
+      # TODO: raise ArgumentError in Openkick 6
+      Openkick.warn('Full reindex does not support :queue mode - use :async mode instead') if mode == :queue
 
       if resume
         index_name = all_indices.sort.last
-        raise Error, "No index to resume" unless index_name
+        raise Error, 'No index to resume' unless index_name
+
         index = Index.new(index_name, @options)
       else
         clean_indices unless retain
 
         index_options = relation.openkick_index_options
-        index_options.deep_merge!(settings: {index: {refresh_interval: refresh_interval}}) if refresh_interval
-        index = create_index(index_options: index_options)
+        index_options.deep_merge!(settings: { index: { refresh_interval: } }) if refresh_interval
+        index = create_index(index_options:)
       end
 
       import_options = {
-        mode: (mode || :inline),
+        mode: mode || :inline,
         full: true,
-        resume: resume,
-        scope: scope
+        resume:,
+        scope:
       }
 
       uuid = index.uuid
@@ -398,30 +400,31 @@ module Openkick
       if mode == :async
         if wait
           puts "Created index: #{index.name}"
-          puts "Jobs queued. Waiting..."
+          puts 'Jobs queued. Waiting...'
           loop do
             sleep 3
             status = Openkick.reindex_status(index.name)
             break if status[:completed]
+
             puts "Batches left: #{status[:batches_left]}"
           end
           # already promoted if alias didn't exist
           if alias_exists
-            puts "Jobs complete. Promoting..."
+            puts 'Jobs complete. Promoting...'
             check_uuid(uuid, index.uuid)
             promote(index.name, update_refresh_interval: !refresh_interval.nil?)
           end
           clean_indices unless retain
-          puts "SUCCESS!"
+          puts 'SUCCESS!'
         end
 
-        {index_name: index.name}
+        { index_name: index.name }
       else
         index.refresh
         true
       end
-    rescue => e
-      if Openkick.transport_error?(e) && (e.message.include?("No handler for type [text]") || e.message.include?("class java.util.ArrayList cannot be cast to class java.util.Map"))
+    rescue StandardError => e
+      if Openkick.transport_error?(e) && (e.message.include?('No handler for type [text]') || e.message.include?('class java.util.ArrayList cannot be cast to class java.util.Map'))
         raise UnsupportedVersionError
       end
 
@@ -433,27 +436,25 @@ module Openkick
     # ideal is for user to disable automatic index creation
     # https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-creation
     def check_uuid(old_uuid, new_uuid)
-      if old_uuid != new_uuid
-        raise Error, "Safety check failed - only run one Model.reindex per model at a time"
-      end
+      return unless old_uuid != new_uuid
+
+      raise Error, 'Safety check failed - only run one Model.reindex per model at a time'
     end
 
-    def notify(record, name)
+    def notify(record, name, &)
       if Openkick.callbacks_value == :bulk
         yield
       else
         name = "#{record.class.openkick_klass.name} #{name}" if record && record.class.openkick_klass
         event = {
-          name: name,
+          name:,
           id: search_id(record)
         }
-        ActiveSupport::Notifications.instrument("request.openkick", event) do
-          yield
-        end
+        ActiveSupport::Notifications.instrument('request.openkick', event, &)
       end
     end
 
-    def notify_bulk(records, name)
+    def notify_bulk(records, name, &)
       if Openkick.callbacks_value == :bulk
         yield
       else
@@ -461,9 +462,7 @@ module Openkick
           name: "#{records.first.class.openkick_klass.name} #{name}",
           count: records.size
         }
-        ActiveSupport::Notifications.instrument("request.openkick", event) do
-          yield
-        end
+        ActiveSupport::Notifications.instrument('request.openkick', event, &)
       end
     end
   end

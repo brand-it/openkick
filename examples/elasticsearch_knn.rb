@@ -1,9 +1,9 @@
-require "active_record"
-require "disco"
-require "elasticsearch"
-require "openkick"
+require 'active_record'
+require 'disco'
+require 'elasticsearch'
+require 'openkick'
 
-ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Schema.define do
   create_table :movies do |t|
@@ -20,10 +20,10 @@ class Movie < ActiveRecord::Base
     mappings: {
       properties: {
         embedding: {
-          type: "dense_vector",
+          type: 'dense_vector',
           dims: 20,
           index: true,
-          similarity: "cosine"
+          similarity: 'cosine'
         }
       }
     },
@@ -31,8 +31,8 @@ class Movie < ActiveRecord::Base
 
   def search_data
     {
-      name: name,
-      embedding: embedding
+      name:,
+      embedding:
     }
   end
 end
@@ -43,20 +43,20 @@ recommender.fit(data)
 
 movies = []
 recommender.item_ids.each do |item_id|
-  movies << {name: item_id, embedding: recommender.item_factors(item_id).to_a}
+  movies << { name: item_id, embedding: recommender.item_factors(item_id).to_a }
 end
 Movie.insert_all!(movies)
 
 Movie.reindex
 
-movie = Movie.find_by!(name: "Star Wars (1977)")
+movie = Movie.find_by!(name: 'Star Wars (1977)')
 body = {
   knn: {
-    filter: {bool: {must_not: {term: {_id: movie.id}}}},
-    field: "embedding",
+    filter: { bool: { must_not: { term: { _id: movie.id } } } },
+    field: 'embedding',
     k: 5,
     num_candidates: 5,
     query_vector: movie.embedding
   }
 }
-pp Movie.search(body: body).map(&:name)
+pp Movie.search(body:).map(&:name)

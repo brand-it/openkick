@@ -1,14 +1,14 @@
 module Rails
   def self.env
-    ENV["RACK_ENV"]
+    ENV.fetch('RACK_ENV', nil)
   end
 end
 
-tenants = ["tenant1", "tenant2"]
+tenants = %w[tenant1 tenant2]
 Apartment.configure do |config|
   config.tenant_names = tenants
   config.database_schema_file = false
-  config.excluded_models = ["Product", "Store", "Region", "Speaker", "Animal", "Dog", "Cat", "Sku", "Song", "Band"]
+  config.excluded_models = %w[Product Store Region Speaker Animal Dog Cat Sku Song Band]
 end
 
 class Tenant < ActiveRecord::Base

@@ -1,37 +1,41 @@
-require_relative "test_helper"
+require_relative 'test_helper'
 
 class LogSubscriberTest < Minitest::Test
   def test_create
     output = capture_logs do
-      Product.create!(name: "Product A")
+      Product.create!(name: 'Product A')
     end
-    assert_match "Product Store", output
+
+    assert_match 'Product Store', output
   end
 
   def test_update
-    product = Product.create!(name: "Product A")
+    product = Product.create!(name: 'Product A')
     output = capture_logs do
       product.reindex(:search_name)
     end
-    assert_match "Product Update", output
+
+    assert_match 'Product Update', output
   end
 
   def test_destroy
-    product = Product.create!(name: "Product A")
+    product = Product.create!(name: 'Product A')
     output = capture_logs do
       product.destroy
     end
-    assert_match "Product Remove", output
+
+    assert_match 'Product Remove', output
   end
 
   def test_bulk
     output = capture_logs do
       Openkick.callbacks(:bulk) do
-        Product.create!(name: "Product A")
+        Product.create!(name: 'Product A')
       end
     end
-    assert_match "Bulk", output
-    refute_match "Product Store", output
+
+    assert_match 'Bulk', output
+    refute_match 'Product Store', output
   end
 
   def test_reindex
@@ -39,7 +43,8 @@ class LogSubscriberTest < Minitest::Test
     output = capture_logs do
       Product.reindex
     end
-    assert_match "Product Import", output
+
+    assert_match 'Product Import', output
     assert_match '"count":3', output
   end
 
@@ -48,22 +53,25 @@ class LogSubscriberTest < Minitest::Test
     output = capture_logs do
       Product.where.not(id: products.last.id).reindex
     end
-    assert_match "Product Import", output
+
+    assert_match 'Product Import', output
     assert_match '"count":2', output
   end
 
   def test_search
     output = capture_logs do
-      Product.search("product").to_a
+      Product.search('product').to_a
     end
-    assert_match "Product Search", output
+
+    assert_match 'Product Search', output
   end
 
   def test_multi_search
     output = capture_logs do
-      Openkick.multi_search([Product.search("product")])
+      Openkick.multi_search([Product.search('product')])
     end
-    assert_match "Multi Search", output
+
+    assert_match 'Multi Search', output
   end
 
   private
@@ -71,7 +79,7 @@ class LogSubscriberTest < Minitest::Test
   def create_products
     Openkick.callbacks(false) do
       3.times.map do
-        Product.create!(name: "Product A")
+        Product.create!(name: 'Product A')
       end
     end
   end
@@ -85,7 +93,7 @@ class LogSubscriberTest < Minitest::Test
       io.rewind
       output = io.read
       previous_logger.debug(output) if previous_logger
-      puts output if ENV["LOG_SUBSCRIBER"]
+      puts output if ENV['LOG_SUBSCRIBER']
       output
     ensure
       ActiveSupport::LogSubscriber.logger = previous_logger

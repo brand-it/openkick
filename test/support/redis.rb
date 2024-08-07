@@ -1,5 +1,5 @@
 options = {}
-options[:logger] = $logger if !defined?(RedisClient)
+options[:logger] = $logger unless defined?(RedisClient)
 
 Openkick.redis =
   if !defined?(Redis)

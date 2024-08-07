@@ -6,9 +6,9 @@ class Region
 
   def search_data
     {
-      name: name,
-      text: text,
-      territory: territory
+      name:,
+      text:,
+      territory:
     }
   end
 end

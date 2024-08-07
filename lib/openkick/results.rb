@@ -3,7 +3,7 @@ module Openkick
     include Enumerable
     extend Forwardable
 
-    # TODO remove klass and options in 6.0
+    # TODO: remove klass and options in 6.0
     attr_reader :klass, :response, :options
 
     def_delegators :results, :each, :any?, :empty?, :size, :length, :slice, :[], :to_ary
@@ -14,17 +14,15 @@ module Openkick
       @options = options
     end
 
-    # TODO make private in 6.0
+    # TODO: make private in 6.0
     def results
       @results ||= with_hit.map(&:first)
     end
 
-    def with_hit
+    def with_hit(&)
       return enum_for(:with_hit) unless block_given?
 
-      build_hits.each do |result|
-        yield result
-      end
+      build_hits.each(&)
     end
 
     def missing_records
@@ -32,40 +30,38 @@ module Openkick
     end
 
     def suggestions
-      if response["suggest"]
-        response["suggest"].values.flat_map { |v| v.first["options"] }.sort_by { |o| -o["score"] }.map { |o| o["text"] }.uniq
-      elsif options[:suggest] || options[:term] == "*" # TODO remove 2nd term
+      if response['suggest']
+        response['suggest'].values.flat_map { |v| v.first['options'] }.sort_by { |o| -o['score'] }.map { |o| o['text'] }.uniq
+      elsif options[:suggest] || options[:term] == '*' # TODO: remove 2nd term
         []
       else
-        raise "Pass `suggest: true` to the search method for suggestions"
+        raise 'Pass `suggest: true` to the search method for suggestions'
       end
     end
 
     def aggregations
-      response["aggregations"]
+      response['aggregations']
     end
 
     def aggs
-      @aggs ||= begin
-        if aggregations
-          aggregations.dup.each do |field, filtered_agg|
-            buckets = filtered_agg[field]
-            # move the buckets one level above into the field hash
-            if buckets
-              filtered_agg.delete(field)
-              filtered_agg.merge!(buckets)
-            end
-          end
-        end
-      end
+      @aggs ||= if aggregations
+                  aggregations.dup.each do |field, filtered_agg|
+                    buckets = filtered_agg[field]
+                    # move the buckets one level above into the field hash
+                    if buckets
+                      filtered_agg.delete(field)
+                      filtered_agg.merge!(buckets)
+                    end
+                  end
+                end
     end
 
     def took
-      response["took"]
+      response['took']
     end
 
     def error
-      response["error"]
+      response['error']
     end
 
     def model_name
@@ -82,20 +78,20 @@ module Openkick
         model_name.human.downcase
       else
         default = options[:count] == 1 ? model_name.human : model_name.human.pluralize
-        model_name.human(options.reverse_merge(default: default))
+        model_name.human(options.reverse_merge(default:))
       end
     end
 
     def total_count
       if options[:total_entries]
         options[:total_entries]
-      elsif response["hits"]["total"].is_a?(Hash)
-        response["hits"]["total"]["value"]
+      elsif response['hits']['total'].is_a?(Hash)
+        response['hits']['total']['value']
       else
-        response["hits"]["total"]
+        response['hits']['total']
       end
     end
-    alias_method :total_entries, :total_count
+    alias total_entries total_count
 
     def current_page
       options[:page]
@@ -104,7 +100,7 @@ module Openkick
     def per_page
       options[:per_page]
     end
-    alias_method :limit_value, :per_page
+    alias limit_value per_page
 
     def padding
       options[:padding]
@@ -113,17 +109,17 @@ module Openkick
     def total_pages
       (total_count / per_page.to_f).ceil
     end
-    alias_method :num_pages, :total_pages
+    alias num_pages total_pages
 
     def offset_value
-      (current_page - 1) * per_page + padding
+      ((current_page - 1) * per_page) + padding
     end
-    alias_method :offset, :offset_value
+    alias offset offset_value
 
     def previous_page
       current_page > 1 ? (current_page - 1) : nil
     end
-    alias_method :prev_page, :previous_page
+    alias prev_page previous_page
 
     def next_page
       current_page < total_pages ? (current_page + 1) : nil
@@ -142,24 +138,22 @@ module Openkick
     end
 
     def hits
-      if error
-        raise Error, "Query error - use the error method to view it"
-      else
-        @response["hits"]["hits"]
-      end
+      raise Error, 'Query error - use the error method to view it' if error
+
+      @response['hits']['hits']
     end
 
     def highlights(multiple: false)
       hits.map do |hit|
-        hit_highlights(hit, multiple: multiple)
+        hit_highlights(hit, multiple:)
       end
     end
 
     def with_highlights(multiple: false)
-      return enum_for(:with_highlights, multiple: multiple) unless block_given?
+      return enum_for(:with_highlights, multiple:) unless block_given?
 
       with_hit.each do |result, hit|
-        yield result, hit_highlights(hit, multiple: multiple)
+        yield result, hit_highlights(hit, multiple:)
       end
     end
 
@@ -167,7 +161,7 @@ module Openkick
       return enum_for(:with_score) unless block_given?
 
       with_hit.each do |result, hit|
-        yield result, hit["_score"]
+        yield result, hit['_score']
       end
     end
 
@@ -176,11 +170,11 @@ module Openkick
     end
 
     def scroll_id
-      @response["_scroll_id"]
+      @response['_scroll_id']
     end
 
     def scroll
-      raise Error, "Pass `scroll` option to the search method for scrolling" unless scroll_id
+      raise Error, 'Pass `scroll` option to the search method for scrolling' unless scroll_id
 
       if block_given?
         records = self
@@ -192,27 +186,25 @@ module Openkick
         records.clear_scroll
       else
         begin
-          # TODO Active Support notifications for this scroll call
-          Results.new(@klass, Openkick.client.scroll(scroll: options[:scroll], body: {scroll_id: scroll_id}), @options)
-        rescue => e
+          # TODO: Active Support notifications for this scroll call
+          Results.new(@klass, Openkick.client.scroll(scroll: options[:scroll], body: { scroll_id: }), @options)
+        rescue StandardError => e
           if Openkick.not_found_error?(e) && e.message =~ /search_context_missing_exception/i
-            raise Error, "Scroll id has expired"
-          else
-            raise e
+            raise Error, 'Scroll id has expired'
           end
+
+          raise e
         end
       end
     end
 
     def clear_scroll
-      begin
-        # try to clear scroll
-        # not required as scroll will expire
-        # but there is a cost to open scrolls
-        Openkick.client.clear_scroll(scroll_id: scroll_id)
-      rescue => e
-        raise e unless Openkick.transport_error?(e)
-      end
+      # try to clear scroll
+      # not required as scroll will expire
+      # but there is a cost to open scrolls
+      Openkick.client.clear_scroll(scroll_id:)
+    rescue StandardError => e
+      raise e unless Openkick.transport_error?(e)
     end
 
     private
@@ -222,7 +214,7 @@ module Openkick
         missing_records = []
 
         if options[:load]
-          grouped_hits = hits.group_by { |hit, _| hit["_index"] }
+          grouped_hits = hits.group_by { |hit, _| hit['_index'] }
 
           # determine models
           index_models = {}
@@ -231,10 +223,13 @@ module Openkick
               if @klass
                 [@klass]
               else
-                index_alias = index.split("_")[0..-2].join("_")
+                index_alias = index.split('_')[0..-2].join('_')
                 Array((options[:index_mapping] || {})[index_alias])
               end
-            raise Error, "Unknown model for index: #{index}. Pass the `models` option to the search method." unless models.any?
+            unless models.any?
+              raise Error, "Unknown model for index: #{index}. Pass the `models` option to the search method."
+            end
+
             index_models[index] = models
           end
 
@@ -250,21 +245,19 @@ module Openkick
           # sort
           results =
             hits.map do |hit|
-              result = results[hit["_index"]][hit["_id"].to_s]
-              if result && !(options[:load].is_a?(Hash) && options[:load][:dumpable])
-                if (hit["highlight"] || options[:highlight]) && !result.respond_to?(:search_highlights)
-                  highlights = hit_highlights(hit)
-                  result.define_singleton_method(:search_highlights) do
-                    highlights
-                  end
+              result = results[hit['_index']][hit['_id'].to_s]
+              if result && !(options[:load].is_a?(Hash) && options[:load][:dumpable]) && ((hit['highlight'] || options[:highlight]) && !result.respond_to?(:search_highlights))
+                highlights = hit_highlights(hit)
+                result.define_singleton_method(:search_highlights) do
+                  highlights
                 end
               end
               [result, hit]
             end.select do |result, hit|
               unless result
-                models = index_models[hit["_index"]]
+                models = index_models[hit['_index']]
                 missing_records << {
-                  id: hit["_id"],
+                  id: hit['_id'],
                   # may be multiple models for inheritance with child models
                   # not ideal to return different types
                   # but this situation shouldn't be common
@@ -277,34 +270,34 @@ module Openkick
           results =
             hits.map do |hit|
               result =
-                if hit["_source"]
-                  hit.except("_source").merge(hit["_source"])
-                elsif hit["fields"]
-                  hit.except("fields").merge(hit["fields"])
+                if hit['_source']
+                  hit.except('_source').merge(hit['_source'])
+                elsif hit['fields']
+                  hit.except('fields').merge(hit['fields'])
                 else
                   hit
                 end
 
-              if hit["highlight"] || options[:highlight]
-                highlight = hit["highlight"].to_a.to_h { |k, v| [base_field(k), v.first] }
+              if hit['highlight'] || options[:highlight]
+                highlight = hit['highlight'].to_a.to_h { |k, v| [base_field(k), v.first] }
                 options[:highlighted_fields].map { |k| base_field(k) }.each do |k|
-                  result["highlighted_#{k}"] ||= (highlight[k] || result[k])
+                  result["highlighted_#{k}"] ||= highlight[k] || result[k]
                 end
               end
 
-              result["id"] ||= result["_id"] # needed for legacy reasons
+              result['id'] ||= result['_id'] # needed for legacy reasons
               [HashWrapper.new(result), hit]
             end
         end
 
-       [results, missing_records]
+        [results, missing_records]
       end
     end
 
     def build_hits
       @build_hits ||= begin
         if missing_records.any?
-          Openkick.warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join("/")} #{v[:id]}" }.join(", ")}")
+          Openkick.warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join('/')} #{v[:id]}" }.join(', ')}")
         end
         with_hit_and_missing_records[0]
       end
@@ -313,7 +306,7 @@ module Openkick
     def results_query(records, hits)
       records = Openkick.scope(records)
 
-      ids = hits.map { |hit| hit["_id"] }
+      ids = hits.map { |hit| hit['_id'] }
       if options[:includes] || options[:model_includes]
         included_relations = []
         combine_includes(included_relations, options[:includes])
@@ -322,30 +315,28 @@ module Openkick
         records = records.includes(included_relations)
       end
 
-      if options[:scope_results]
-        records = options[:scope_results].call(records)
-      end
+      records = options[:scope_results].call(records) if options[:scope_results]
 
       Openkick.load_records(records, ids)
     end
 
     def combine_includes(result, inc)
-      if inc
-        if inc.is_a?(Array)
-          result.concat(inc)
-        else
-          result << inc
-        end
+      return unless inc
+
+      if inc.is_a?(Array)
+        result.concat(inc)
+      else
+        result << inc
       end
     end
 
     def base_field(k)
-      k.sub(/\.(analyzed|word_start|word_middle|word_end|text_start|text_middle|text_end|exact)\z/, "")
+      k.sub(/\.(analyzed|word_start|word_middle|word_end|text_start|text_middle|text_end|exact)\z/, '')
     end
 
     def hit_highlights(hit, multiple: false)
-      if hit["highlight"]
-        hit["highlight"].to_h { |k, v| [(options[:json] ? k : k.sub(/\.#{@options[:match_suffix]}\z/, "")).to_sym, multiple ? v : v.first] }
+      if hit['highlight']
+        hit['highlight'].to_h { |k, v| [(options[:json] ? k : k.sub(/\.#{@options[:match_suffix]}\z/, '')).to_sym, multiple ? v : v.first] }
       else
         {}
       end
