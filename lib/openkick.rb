@@ -9,6 +9,10 @@ require 'hashie'
 # stdlib
 require 'forwardable'
 
+# Classes
+require_relative 'openkick/query/fields'
+require_relative 'openkick/query/opensearch/reranking'
+
 # modules
 require_relative 'openkick/controller_runtime'
 require_relative 'openkick/index'

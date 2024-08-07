@@ -2,10 +2,21 @@ module Openkick
   class Query
     include Enumerable
     extend Forwardable
+    KNOWN_KEYWORDS = %i[
+      aggs block body body_options boost
+      boost_by boost_by_distance boost_by_recency
+      boost_where conversions conversions_term debug
+      emoji exclude explain fields highlight includes
+      index_name indices_boost limit load match misspellings
+      models model_includes offset operator order padding
+      page per_page profile request_params routing scope_results
+      scroll select similar smart_aggs suggest total_entries
+      track type where rerank
+    ].freeze
 
     @@metric_aggs = %i[avg cardinality max min sum]
 
-    attr_reader :klass, :term, :options
+    attr_reader :klass, :term, :options, :fields
     attr_accessor :body
 
     def_delegators :execute, :map, :each, :any?, :empty?, :size, :length, :slice, :[], :to_ary,
@@ -17,19 +28,13 @@ module Openkick
                    :with_score, :misspellings?, :scroll_id, :clear_scroll, :missing_records, :with_hit
 
     def initialize(klass, term = '*', **options)
-      unknown_keywords = options.keys - %i[aggs block body body_options boost
-                                           boost_by boost_by_distance boost_by_recency boost_where conversions conversions_term debug emoji exclude explain
-                                           fields highlight includes index_name indices_boost limit load
-                                           match misspellings models model_includes offset operator order padding page per_page profile
-                                           request_params routing scope_results scroll select similar smart_aggs suggest total_entries track type where]
-      raise ArgumentError, "unknown keywords: #{unknown_keywords.join(', ')}" if unknown_keywords.any?
+      if (unknown_keywords = options.keys - KNOWN_KEYWORDS).any?
+        raise ArgumentError, "unknown keywords: #{unknown_keywords.join(', ')}"
+      end
 
-      term = term.to_s
-
-      term = EmojiParser.parse_unicode(term) { |e| " #{e.name.tr('_', ' ')} " }.strip if options[:emoji]
-
+      @term = term.to_s
+      @term = EmojiParser.parse_unicode(term) { |e| " #{e.name.tr('_', ' ')} " }.strip if options[:emoji]
       @klass = klass
-      @term = term
       @options = options
       @match_suffix = options[:match] || openkick_options[:match] || 'analyzed'
 
@@ -40,6 +45,7 @@ module Openkick
       @misspellings_below = nil
       @highlighted_fields = nil
       @index_mapping = nil
+      @fields = Fields.new(term, options:, openkick_options:)
 
       prepare
     end
@@ -242,8 +248,6 @@ module Openkick
     end
 
     def prepare
-      boost_fields, fields = set_fields
-
       operator = options[:operator] || 'and'
 
       # pagination
@@ -339,15 +343,19 @@ module Openkick
             @misspellings = true
           end
 
-          fields.each do |field|
+          fields.each_with_factor do |field, factor|
             queries_to_add = []
             qs = []
-
-            factor = boost_fields[field] || 1
-            shared_options = {
-              query: term,
-              boost: 10 * factor
-            }
+            shared_options = if options.key?(:rerank)
+                               {
+                                 query: term
+                               }
+                             else
+                               {
+                                 query: term,
+                                 boost: 10 * factor
+                               }
+                             end
 
             match_type =
               if field.end_with?('.phrase')
@@ -393,7 +401,18 @@ module Openkick
             end
 
             if field_misspellings != false && match_type == :match
-              qs.concat(qs.map { |q| q.except(:cutoff_frequency).merge(fuzziness: edit_distance, prefix_length:, max_expansions:, boost: factor).merge(transpositions) })
+              qs.concat(
+                qs.map do |q|
+                  q.except(:cutoff_frequency)
+                  .merge(
+                    fuzziness: edit_distance,
+                    prefix_length:,
+                    max_expansions:
+                  )
+                  .merge(options.key?(:rerank) ? {} : { boost: factor })
+                  .merge(transpositions)
+                end
+              )
             end
 
             if field.start_with?('*.')
@@ -490,6 +509,7 @@ module Openkick
         set_boost_by_recency(custom_filters) if options[:boost_by_recency]
 
         payload[:query] = build_query(query, filters, should, must_not, custom_filters, multiply_filters)
+        Opensearch::Reranking.call(term, payload:, options:)
 
         payload[:explain] = options[:explain] if options[:explain]
         payload[:profile] = options[:profile] if options[:profile]
@@ -556,32 +576,6 @@ module Openkick
       @padding = padding
       @load = load
       @scroll = scroll
-    end
-
-    def set_fields
-      boost_fields = {}
-      fields = options[:fields] || openkick_options[:default_fields] || openkick_options[:searchable]
-      all = openkick_options.key?(:_all) ? openkick_options[:_all] : false
-      default_match = options[:match] || openkick_options[:match] || :word
-      fields =
-        if fields
-          fields.map do |value|
-            k, v = value.is_a?(Hash) ? value.to_a.first : [value, default_match]
-            k2, boost = k.to_s.split('^', 2)
-            field = "#{k2}.#{v == :word ? 'analyzed' : v}"
-            boost_fields[field] = boost.to_f if boost
-            field
-          end
-        elsif all && default_match == :word
-          ['_all']
-        elsif all && default_match == :phrase
-          ['_all.phrase']
-        elsif term != '*' && default_match == :exact
-          raise ArgumentError, 'Must specify fields to search'
-        else
-          [default_match == :word ? '*.analyzed' : "*.#{default_match}"]
-        end
-      [boost_fields, fields]
     end
 
     def build_query(query, filters, should, must_not, custom_filters, multiply_filters)
