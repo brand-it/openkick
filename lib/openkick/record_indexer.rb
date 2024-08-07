@@ -13,9 +13,7 @@ module Openkick
 
       case mode
       when :async
-        unless defined?(ActiveJob)
-          raise Error, "Active Job not found"
-        end
+        raise Error, 'Active Job not found' unless defined?(ActiveJob)
 
         # we could likely combine ReindexV2Job, BulkReindexJob, and ProcessBatchJob
         # but keep them separate for now
@@ -24,15 +22,13 @@ module Openkick
 
           # always pass routing in case record is deleted
           # before the async job runs
-          if record.respond_to?(:search_routing)
-            routing = record.search_routing
-          end
+          routing = record.search_routing if record.respond_to?(:search_routing)
 
           Openkick::ReindexV2Job.perform_later(
             record.class.name,
             record.id.to_s,
             method_name ? method_name.to_s : nil,
-            routing: routing,
+            routing:,
             index_name: index.name
           )
         else
@@ -44,16 +40,14 @@ module Openkick
           )
         end
       when :queue
-        if method_name
-          raise Error, "Partial reindex not supported with queue option"
-        end
+        raise Error, 'Partial reindex not supported with queue option' if method_name
 
         index.reindex_queue.push_records(records)
       when true, :inline
         index_records, other_records = records.partition { |r| index_record?(r) }
-        import_inline(index_records, !full ? other_records : [], method_name: method_name, single: single)
+        import_inline(index_records, full ? [] : other_records, method_name:, single:)
       else
-        raise ArgumentError, "Invalid value for mode"
+        raise ArgumentError, 'Invalid value for mode'
       end
 
       # return true like model and relation reindex for now
@@ -76,7 +70,7 @@ module Openkick
           construct_record(klass, id, routing[id])
         end
 
-      import_inline(records, delete_records, method_name: method_name, single: single)
+      import_inline(records, delete_records, method_name:, single:)
     end
 
     private
@@ -98,24 +92,22 @@ module Openkick
           end
         end
 
-        if delete_records.any?
-          index.bulk_delete(delete_records)
-        end
+        index.bulk_delete(delete_records) if delete_records.any?
       end
     end
 
-    def maybe_bulk(index_records, delete_records, method_name, single)
+    def maybe_bulk(index_records, delete_records, method_name, single, &block)
       if Openkick.callbacks_value == :bulk
         yield
       else
         # set action and data
         action =
           if single && index_records.empty?
-            "Remove"
+            'Remove'
           elsif method_name
-            "Update"
+            'Update'
           else
-            single ? "Store" : "Import"
+            single ? 'Store' : 'Import'
           end
         record = index_records.first || delete_records.first
         name = record.class.openkick_klass.name
@@ -129,9 +121,7 @@ module Openkick
         end
 
         with_retries do
-          Openkick.callbacks(:bulk, message: message) do
-            yield
-          end
+          Openkick.callbacks(:bulk, message:, &block)
         end
       end
     end

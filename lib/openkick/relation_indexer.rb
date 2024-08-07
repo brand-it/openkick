@@ -15,29 +15,25 @@ module Openkick
       end
 
       # remove unneeded loading for async and queue
-      if mode == :async || mode == :queue
+      if %i[async queue].include?(mode)
         if relation.respond_to?(:primary_key)
           relation = relation.except(:includes, :preload)
           unless mode == :queue && relation.klass.method_defined?(:search_routing)
             relation = relation.except(:select).select(relation.primary_key)
           end
         elsif relation.respond_to?(:only)
-          unless mode == :queue && relation.klass.method_defined?(:search_routing)
-            relation = relation.only(:_id)
-          end
+          relation = relation.only(:_id) unless mode == :queue && relation.klass.method_defined?(:search_routing)
         end
       end
 
-      if mode == :async && full
-        return full_reindex_async(relation)
-      end
+      return full_reindex_async(relation) if mode == :async && full
 
       relation = resume_relation(relation) if resume
 
       reindex_options = {
-        mode: mode,
-        method_name: method_name,
-        full: full
+        mode:,
+        method_name:,
+        full:
       }
       record_indexer = RecordIndexer.new(index)
 
@@ -47,31 +43,29 @@ module Openkick
     end
 
     def batches_left
-      Openkick.with_redis { |r| r.call("SCARD", batches_key) }
+      Openkick.with_redis { |r| r.call('SCARD', batches_key) }
     end
 
     def batch_completed(batch_id)
-      Openkick.with_redis { |r| r.call("SREM", batches_key, [batch_id]) }
+      Openkick.with_redis { |r| r.call('SREM', batches_key, [batch_id]) }
     end
 
     private
 
     def resume_relation(relation)
-      if relation.respond_to?(:primary_key)
-        # use total docs instead of max id since there's not a great way
-        # to get the max _id without scripting since it's a string
-        where = relation.arel_table[relation.primary_key].gt(index.total_docs)
-        relation = relation.where(where)
-      else
-        raise Error, "Resume not supported for Mongoid"
-      end
+      raise Error, 'Resume not supported for Mongoid' unless relation.respond_to?(:primary_key)
+
+      # use total docs instead of max id since there's not a great way
+      # to get the max _id without scripting since it's a string
+      where = relation.arel_table[relation.primary_key].gt(index.total_docs)
+      relation = relation.where(where)
     end
 
     def in_batches(relation)
       if relation.respond_to?(:find_in_batches)
         klass = relation.klass
         # remove order to prevent possible warnings
-        relation.except(:order).find_in_batches(batch_size: batch_size) do |batch|
+        relation.except(:order).find_in_batches(batch_size:) do |batch|
           # prevent scope from affecting search_data as well as inline jobs
           # Active Record runs relation calls in scoping block
           # https://github.com/rails/rails/blob/main/activerecord/lib/active_record/relation/delegation.rb
@@ -92,7 +86,7 @@ module Openkick
         end
       else
         klass = relation.klass
-        each_batch(relation, batch_size: batch_size) do |batch|
+        each_batch(relation, batch_size:) do |batch|
           # prevent scope from affecting search_data as well as inline jobs
           # note: Model.with_scope doesn't always restore scope, so use custom logic
           previous_scope = Mongoid::Threaded.current_scope(klass)
@@ -139,11 +133,11 @@ module Openkick
     end
 
     def batch_job(class_name, batch_id, record_ids)
-      Openkick.with_redis { |r| r.call("SADD", batches_key, [batch_id]) }
+      Openkick.with_redis { |r| r.call('SADD', batches_key, [batch_id]) }
       Openkick::BulkReindexJob.perform_later(
-        class_name: class_name,
+        class_name:,
         index_name: index.name,
-        batch_id: batch_id,
+        batch_id:,
         record_ids: record_ids.map { |v| v.instance_of?(Integer) ? v : v.to_s }
       )
     end

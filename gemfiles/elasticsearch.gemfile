@@ -1,15 +1,19 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gemspec path: '..'
 
-gem 'actionpack', '~> 7.0.0'
-gem 'activejob', '~> 7.0.0', require: 'active_job'
-gem 'activerecord', '~> 7.0.0'
+gem 'actionpack', '~> 7.1.0'
+gem 'activejob', '~> 7.1.0', require: 'active_job'
+gem 'activerecord', '~> 7.1.0'
 gem 'connection_pool'
 gem 'elasticsearch', '~> 8'
 gem 'gemoji-parser'
 gem 'kaminari'
 gem 'minitest', '>= 5'
+gem 'parallel_tests'
 gem 'rake'
 gem 'redis-client'
 gem 'sqlite3', '< 2'
+gem 'typhoeus'

@@ -20,12 +20,12 @@ module Openkick
       return if items.empty?
 
       response = Openkick.client.bulk(body: items)
-      if response["errors"]
-        # note: delete does not set error when item not found
-        first_with_error = response["items"].map do |item|
-          (item["index"] || item["delete"] || item["update"])
-        end.find { |item| item["error"] }
-        raise ImportError, "#{first_with_error["error"]} on item with id '#{first_with_error["_id"]}'"
+      if response['errors']
+        # NOTE: delete does not set error when item not found
+        first_with_error = response['items'].map do |item|
+          item['index'] || item['delete'] || item['update']
+        end.find { |item| item['error'] }
+        raise ImportError, "#{first_with_error['error']} on item with id '#{first_with_error['_id']}'"
       end
 
       # maybe return response in future

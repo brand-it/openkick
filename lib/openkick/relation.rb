@@ -2,16 +2,16 @@ module Openkick
   class Relation
     NO_DEFAULT_VALUE = Object.new
 
-    # note: modifying body directly is not supported
+    # NOTE: modifying body directly is not supported
     # and has no impact on query after being executed
     # TODO freeze body object?
     delegate :body, :params, to: :query
     delegate_missing_to :private_execute
 
     attr_reader :model
-    alias_method :klass, :model
+    alias klass model
 
-    def initialize(model, term = "*", **options)
+    def initialize(model, term = '*', **options)
       @model = model
       @term = term
       @options = options
@@ -23,12 +23,12 @@ module Openkick
     # same as Active Record
     def inspect
       entries = results.first(11).map!(&:inspect)
-      entries[10] = "..." if entries.size == 11
+      entries[10] = '...' if entries.size == 11
       "#<#{self.class.name} [#{entries.join(', ')}]>"
     end
 
     def execute
-      Openkick.warn("The execute method is no longer needed")
+      Openkick.warn('The execute method is no longer needed')
       load
     end
 
@@ -46,7 +46,7 @@ module Openkick
 
     # experimental
     def offset(value = NO_DEFAULT_VALUE)
-      # TODO remove in Openkick 6
+      # TODO: remove in Openkick 6
       if value == NO_DEFAULT_VALUE
         private_execute.offset
       else
@@ -75,7 +75,7 @@ module Openkick
 
     # experimental
     def per_page(value = NO_DEFAULT_VALUE)
-      # TODO remove in Openkick 6
+      # TODO: remove in Openkick 6
       if value == NO_DEFAULT_VALUE
         private_execute.per_page
       else
@@ -102,11 +102,11 @@ module Openkick
     # experimental
     def where!(value)
       check_loaded
-      if @options[:where]
-        @options[:where] = {_and: [@options[:where], ensure_permitted(value)]}
-      else
-        @options[:where] = ensure_permitted(value)
-      end
+      @options[:where] = if @options[:where]
+                           { _and: [@options[:where], ensure_permitted(value)] }
+                         else
+                           ensure_permitted(value)
+                         end
       self
     end
 
@@ -148,9 +148,9 @@ module Openkick
     end
 
     # experimental
-    def select(*values, &block)
+    def select(*values, &)
       if block_given?
-        private_execute.select(*values, &block)
+        private_execute.select(*values, &)
       else
         clone.select!(*values)
       end
@@ -211,7 +211,7 @@ module Openkick
       Results.new(nil, nil, nil).respond_to?(method_name, include_all) || super
     end
 
-    # TODO uncomment in 6.0
+    # TODO: uncomment in 6.0
     # def to_yaml
     #   private_execute.to_a.to_yaml
     # end
@@ -227,7 +227,7 @@ module Openkick
     end
 
     def check_loaded
-      raise Error, "Relation loaded" if loaded?
+      raise Error, 'Relation loaded' if loaded?
 
       # reset query since options will change
       @query = nil

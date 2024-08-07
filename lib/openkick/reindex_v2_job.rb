@@ -10,8 +10,8 @@ module Openkick
       # could use Openkick.scope() in future
       # but keep for now for backwards compatibility
       model = model.unscoped if model.respond_to?(:unscoped)
-      items = [{id: id, routing: routing}]
-      RecordIndexer.new(index).reindex_items(model, items, method_name: method_name, single: true)
+      items = [{ id:, routing: }]
+      RecordIndexer.new(index).reindex_items(model, items, method_name:, single: true)
     end
   end
 end

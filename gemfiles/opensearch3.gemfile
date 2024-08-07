@@ -1,17 +1,17 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gemspec path: ".."
+gemspec path: '..'
 
-gem "rake"
-gem "minitest", ">= 5"
-gem "sqlite3", "< 2"
-gem "activerecord", "~> 7.0.0"
-gem "actionpack", "~> 7.0.0"
-gem "activejob", "~> 7.0.0", require: "active_job"
-gem "opensearch-ruby", "~> 3"
-gem "redis-client"
-gem "connection_pool"
-gem "kaminari"
-gem "gemoji-parser"
-gem "parallel_tests"
-gem "typhoeus"
+gem 'actionpack', '~> 7.0.0'
+gem 'activejob', '~> 7.0.0', require: 'active_job'
+gem 'activerecord', '~> 7.0.0'
+gem 'connection_pool'
+gem 'gemoji-parser'
+gem 'kaminari'
+gem 'minitest', '>= 5'
+gem 'opensearch-ruby', '~> 3'
+gem 'parallel_tests'
+gem 'rake'
+gem 'redis-client'
+gem 'sqlite3', '< 2'
+gem 'typhoeus'

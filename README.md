@@ -2184,8 +2184,23 @@ Everyone is encouraged to help improve this project. Here are a few ways you can
 To get started with development:
 
 ```sh
+docker run --name redis-container -p 6379:6379 -d redis
+docker run -d --name opensearch \
+-p 9200:9200 \
+-e "discovery.type=single-node" \
+-e "DISABLE_SECURITY_PLUGIN=true" \
+opensearchproject/opensearch:latest
+```
+
+```sh
 git clone https://github.com/brandit/openkick.git
 cd openkick
+docker run --name redis-container -p 6379:6379 -d redis
+docker run -d --name opensearch \
+-p 9200:9200 \
+-e "discovery.type=single-node" \
+-e "DISABLE_SECURITY_PLUGIN=true" \
+opensearchproject/opensearch:latest
 bundle install
 bundle exec rake test
 ```

@@ -1,227 +1,256 @@
-require_relative "test_helper"
+require_relative 'test_helper'
 
 class ReindexTest < Minitest::Test
   def test_record_inline
-    store_names ["Product A", "Product B"], reindex: false
+    store_names ['Product A', 'Product B'], reindex: false
 
-    product = Product.find_by!(name: "Product A")
+    product = Product.find_by!(name: 'Product A')
+
     assert_equal true, product.reindex(refresh: true)
-    assert_search "product", ["Product A"]
+    assert_search 'product', ['Product A']
   end
 
   def test_record_destroyed
-    store_names ["Product A", "Product B"]
+    store_names ['Product A', 'Product B']
 
-    product = Product.find_by!(name: "Product A")
+    product = Product.find_by!(name: 'Product A')
     product.destroy
     Product.openkick_index.refresh
+
     assert_equal true, product.reindex
   end
 
   def test_record_async
-    store_names ["Product A", "Product B"], reindex: false
+    store_names ['Product A', 'Product B'], reindex: false
 
-    product = Product.find_by!(name: "Product A")
+    product = Product.find_by!(name: 'Product A')
+
     perform_enqueued_jobs do
       assert_equal true, product.reindex(mode: :async)
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_record_queue
     reindex_queue = Product.openkick_index.reindex_queue
     reindex_queue.clear
 
-    store_names ["Product A", "Product B"], reindex: false
+    store_names ['Product A', 'Product B'], reindex: false
 
-    product = Product.find_by!(name: "Product A")
+    product = Product.find_by!(name: 'Product A')
+
     assert_equal true, product.reindex(mode: :queue)
     Product.openkick_index.refresh
-    assert_search "product", []
+
+    assert_search 'product', []
 
     perform_enqueued_jobs do
-      Openkick::ProcessQueueJob.perform_now(class_name: "Product")
+      Openkick::ProcessQueueJob.perform_now(class_name: 'Product')
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_record_index
-    store_names ["Product A", "Product B"], reindex: false
+    store_names ['Product A', 'Product B'], reindex: false
 
-    product = Product.find_by!(name: "Product A")
+    product = Product.find_by!(name: 'Product A')
+
     assert_equal true, Product.openkick_index.reindex([product], refresh: true)
-    assert_search "product", ["Product A"]
+    assert_search 'product', ['Product A']
   end
 
   def test_relation_inline
-    store_names ["Product A"]
-    store_names ["Product B", "Product C"], reindex: false
-    Product.where(name: "Product B").reindex(refresh: true)
-    assert_search "product", ["Product A", "Product B"]
+    store_names ['Product A']
+    store_names ['Product B', 'Product C'], reindex: false
+    Product.where(name: 'Product B').reindex(refresh: true)
+
+    assert_search 'product', ['Product A', 'Product B']
   end
 
   def test_relation_associations
-    store_names ["Product A"]
-    store = Store.create!(name: "Test")
-    Product.create!(name: "Product B", store_id: store.id)
+    store_names ['Product A']
+    store = Store.create!(name: 'Test')
+    Product.create!(name: 'Product B', store_id: store.id)
+
     assert_equal true, store.products.reindex(refresh: true)
-    assert_search "product", ["Product A", "Product B"]
+    assert_search 'product', ['Product A', 'Product B']
   end
 
   def test_relation_scoping
-    store_names ["Product A", "Product B"]
+    store_names ['Product A', 'Product B']
     Product.dynamic_data = lambda do
       {
         name: "Count #{Product.count}"
       }
     end
-    Product.where(name: "Product A").reindex(refresh: true)
-    assert_search "count", ["Count 2"], load: false
+    Product.where(name: 'Product A').reindex(refresh: true)
+
+    assert_search 'count', ['Count 2'], load: false
   ensure
     Product.dynamic_data = nil
   end
 
   def test_relation_scoping_restored
-    # TODO add test for Mongoid
+    # TODO: add test for Mongoid
     skip unless activerecord?
 
     assert_nil Product.current_scope
-    Product.where(name: "Product A").scoping do
+    Product.where(name: 'Product A').scoping do
       scope = Product.current_scope
+
       refute_nil scope
 
       Product.all.reindex(refresh: true)
 
-      # note: should be reset even if we don't do it
+      # NOTE: should be reset even if we don't do it
       assert_equal scope, Product.current_scope
     end
     assert_nil Product.current_scope
   end
 
   def test_relation_should_index
-    store_names ["Product A", "Product B"]
+    store_names ['Product A', 'Product B']
     Openkick.callbacks(false) do
-      Product.find_by(name: "Product B").update!(name: "DO NOT INDEX")
+      Product.find_by(name: 'Product B').update!(name: 'DO NOT INDEX')
     end
-    assert_equal true, Product.where(name: "DO NOT INDEX").reindex
+
+    assert_equal true, Product.where(name: 'DO NOT INDEX').reindex
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_relation_async
-    store_names ["Product A"]
-    store_names ["Product B", "Product C"], reindex: false
+    store_names ['Product A']
+    store_names ['Product B', 'Product C'], reindex: false
     perform_enqueued_jobs do
-      Product.where(name: "Product B").reindex(mode: :async)
+      Product.where(name: 'Product B').reindex(mode: :async)
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A", "Product B"]
+
+    assert_search 'product', ['Product A', 'Product B']
   end
 
   def test_relation_async_should_index
-    store_names ["Product A", "Product B"]
+    store_names ['Product A', 'Product B']
     Openkick.callbacks(false) do
-      Product.find_by(name: "Product B").update!(name: "DO NOT INDEX")
+      Product.find_by(name: 'Product B').update!(name: 'DO NOT INDEX')
     end
+
     perform_enqueued_jobs do
-      assert_equal true, Product.where(name: "DO NOT INDEX").reindex(mode: :async)
+      assert_equal true, Product.where(name: 'DO NOT INDEX').reindex(mode: :async)
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_relation_async_routing
-    store_names ["Store A"], Store, reindex: false
+    store_names ['Store A'], Store, reindex: false
     perform_enqueued_jobs do
-      Store.where(name: "Store A").reindex(mode: :async)
+      Store.where(name: 'Store A').reindex(mode: :async)
     end
     Store.openkick_index.refresh
-    assert_search "*", ["Store A"], {routing: "Store A"}, Store
+
+    assert_search '*', ['Store A'], { routing: 'Store A' }, Store
   end
 
   def test_relation_queue
     reindex_queue = Product.openkick_index.reindex_queue
     reindex_queue.clear
 
-    store_names ["Product A"]
-    store_names ["Product B", "Product C"], reindex: false
+    store_names ['Product A']
+    store_names ['Product B', 'Product C'], reindex: false
 
-    Product.where(name: "Product B").reindex(mode: :queue)
+    Product.where(name: 'Product B').reindex(mode: :queue)
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
 
     perform_enqueued_jobs do
-      Openkick::ProcessQueueJob.perform_now(class_name: "Product")
+      Openkick::ProcessQueueJob.perform_now(class_name: 'Product')
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A", "Product B"]
+
+    assert_search 'product', ['Product A', 'Product B']
   end
 
   def test_relation_queue_all
     reindex_queue = Product.openkick_index.reindex_queue
     reindex_queue.clear
 
-    store_names ["Product A"]
-    store_names ["Product B", "Product C"], reindex: false
+    store_names ['Product A']
+    store_names ['Product B', 'Product C'], reindex: false
 
     Product.all.reindex(mode: :queue)
     Product.openkick_index.refresh
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
 
     perform_enqueued_jobs do
-      Openkick::ProcessQueueJob.perform_now(class_name: "Product")
+      Openkick::ProcessQueueJob.perform_now(class_name: 'Product')
     end
     Product.openkick_index.refresh
-    assert_search "product", ["Product A", "Product B", "Product C"]
+
+    assert_search 'product', ['Product A', 'Product B', 'Product C']
   end
 
   def test_relation_queue_routing
     reindex_queue = Store.openkick_index.reindex_queue
     reindex_queue.clear
 
-    store_names ["Store A"], Store, reindex: false
-    Store.where(name: "Store A").reindex(mode: :queue)
+    store_names ['Store A'], Store, reindex: false
+    Store.where(name: 'Store A').reindex(mode: :queue)
     Store.openkick_index.refresh
-    assert_search "*", [], {}, Store
+
+    assert_search '*', [], {}, Store
 
     perform_enqueued_jobs do
-      Openkick::ProcessQueueJob.perform_now(class_name: "Store")
+      Openkick::ProcessQueueJob.perform_now(class_name: 'Store')
     end
     Store.openkick_index.refresh
-    assert_search "*", ["Store A"], {routing: "Store A"}, Store
+
+    assert_search '*', ['Store A'], { routing: 'Store A' }, Store
   end
 
   def test_relation_index
-    store_names ["Product A"]
-    store_names ["Product B", "Product C"], reindex: false
-    Product.openkick_index.reindex(Product.where(name: "Product B"), refresh: true)
-    assert_search "product", ["Product A", "Product B"]
+    store_names ['Product A']
+    store_names ['Product B', 'Product C'], reindex: false
+    Product.openkick_index.reindex(Product.where(name: 'Product B'), refresh: true)
+
+    assert_search 'product', ['Product A', 'Product B']
   end
 
   def test_full_async
-    store_names ["Product A"], reindex: false
+    store_names ['Product A'], reindex: false
     reindex = nil
     perform_enqueued_jobs do
       reindex = Product.reindex(mode: :async)
-      assert_search "product", [], conversions: false
+
+      assert_search 'product', [], conversions: false
     end
 
     index = Openkick::Index.new(reindex[:index_name])
     index.refresh
+
     assert_equal 1, index.total_docs
 
     reindex_status = Openkick.reindex_status(reindex[:name])
+
     assert_equal true, reindex_status[:completed]
     assert_equal 0, reindex_status[:batches_left]
 
     Product.openkick_index.promote(reindex[:index_name])
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_full_async_should_index
-    store_names ["Product A", "Product B", "DO NOT INDEX"], reindex: false
+    store_names ['Product A', 'Product B', 'DO NOT INDEX'], reindex: false
 
     reindex = nil
     perform_enqueued_jobs do
@@ -230,11 +259,12 @@ class ReindexTest < Minitest::Test
 
     index = Openkick::Index.new(reindex[:index_name])
     index.refresh
+
     assert_equal 2, index.total_docs
   end
 
   def test_full_async_wait
-    store_names ["Product A"], reindex: false
+    store_names ['Product A'], reindex: false
 
     perform_enqueued_jobs do
       capture_io do
@@ -242,40 +272,44 @@ class ReindexTest < Minitest::Test
       end
     end
 
-    assert_search "product", ["Product A"]
+    assert_search 'product', ['Product A']
   end
 
   def test_full_async_non_integer_pk
-    Sku.create(id: SecureRandom.hex, name: "Test")
+    Sku.create(id: SecureRandom.hex, name: 'Test')
 
     reindex = nil
     perform_enqueued_jobs do
       reindex = Sku.reindex(mode: :async)
-      assert_search "sku", [], conversions: false
+
+      assert_search 'sku', [], conversions: false
     end
 
     index = Openkick::Index.new(reindex[:index_name])
     index.refresh
+
     assert_equal 1, index.total_docs
   ensure
     Sku.destroy_all
   end
 
   def test_full_queue
-    assert_warns "Full reindex does not support :queue mode - use :async mode instead" do
+    assert_warns 'Full reindex does not support :queue mode - use :async mode instead' do
       Product.reindex(mode: :queue)
     end
   end
 
   def test_full_refresh_interval
-    reindex = Product.reindex(refresh_interval: "30s", mode: :async, import: false)
+    reindex = Product.reindex(refresh_interval: '30s', mode: :async, import: false)
     index = Openkick::Index.new(reindex[:index_name])
+
     assert_nil Product.openkick_index.refresh_interval
-    assert_equal "30s", index.refresh_interval
+    assert_equal '30s', index.refresh_interval
 
     Product.openkick_index.promote(index.name, update_refresh_interval: true)
-    assert_equal "1s", index.refresh_interval
-    assert_equal "1s", Product.openkick_index.refresh_interval
+
+    assert_equal '1s', index.refresh_interval
+    assert_equal '1s', Product.openkick_index.refresh_interval
   end
 
   def test_full_resume
@@ -283,7 +317,7 @@ class ReindexTest < Minitest::Test
       error = assert_raises(Openkick::Error) do
         Product.reindex(resume: true)
       end
-      assert_equal "Resume not supported for Mongoid", error.message
+      assert_equal 'Resume not supported for Mongoid', error.message
     else
       assert Product.reindex(resume: true)
     end
@@ -294,33 +328,35 @@ class ReindexTest < Minitest::Test
   end
 
   def test_full_partial_async
-    store_names ["Product A"]
+    store_names ['Product A']
     Product.reindex(:search_name, mode: :async)
-    assert_search "product", ["Product A"]
+
+    assert_search 'product', ['Product A']
   end
 
   def test_wait_not_async
     error = assert_raises(ArgumentError) do
       Product.reindex(wait: false)
     end
-    assert_equal "wait only available in :async mode", error.message
+    assert_equal 'wait only available in :async mode', error.message
   end
 
   def test_object_index
     error = assert_raises(Openkick::Error) do
       Product.openkick_index.reindex(Object.new)
     end
-    assert_equal "Cannot reindex object", error.message
+    assert_equal 'Cannot reindex object', error.message
   end
 
   def test_transaction
     skip unless activerecord?
 
     Product.transaction do
-      store_names ["Product A"]
+      store_names ['Product A']
       raise ActiveRecord::Rollback
     end
-    assert_search "*", []
+
+    assert_search '*', []
   end
 
   def test_both_paths

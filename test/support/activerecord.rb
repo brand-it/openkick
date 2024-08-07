@@ -1,4 +1,4 @@
-require "active_record"
+require 'active_record'
 
 # for debugging
 ActiveRecord::Base.logger = $logger
@@ -12,11 +12,11 @@ end
 ActiveRecord::Base.time_zone_aware_attributes = true
 
 # migrations
-ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
 
-require_relative "apartment" if defined?(Apartment)
+require_relative 'apartment' if defined?(Apartment)
 
-ActiveRecord::Migration.verbose = ENV["VERBOSE"]
+ActiveRecord::Migration.verbose = ENV.fetch('VERBOSE', nil)
 
 ActiveRecord::Schema.define do
   create_table :products do |t|
@@ -66,7 +66,7 @@ ActiveRecord::Schema.define do
     t.boolean :active
   end
 
- create_table :artists do |t|
+  create_table :artists do |t|
     t.string :name
     t.boolean :active
     t.boolean :should_index

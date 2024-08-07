@@ -1,62 +1,65 @@
 # dependencies
-require "active_support"
-require "active_support/core_ext/hash/deep_merge"
-require "active_support/core_ext/module/attr_internal"
-require "active_support/core_ext/module/delegation"
-require "active_support/notifications"
-require "hashie"
+require 'active_support'
+require 'active_support/core_ext/hash/deep_merge'
+require 'active_support/core_ext/module/attr_internal'
+require 'active_support/core_ext/module/delegation'
+require 'active_support/notifications'
+require 'hashie'
 
 # stdlib
-require "forwardable"
+require 'forwardable'
 
 # modules
-require_relative "openkick/controller_runtime"
-require_relative "openkick/index"
-require_relative "openkick/index_cache"
-require_relative "openkick/index_options"
-require_relative "openkick/indexer"
-require_relative "openkick/hash_wrapper"
-require_relative "openkick/log_subscriber"
-require_relative "openkick/model"
-require_relative "openkick/multi_search"
-require_relative "openkick/query"
-require_relative "openkick/reindex_queue"
-require_relative "openkick/record_data"
-require_relative "openkick/record_indexer"
-require_relative "openkick/relation"
-require_relative "openkick/relation_indexer"
-require_relative "openkick/results"
-require_relative "openkick/raw"
-require_relative "openkick/version"
-require_relative "openkick/where"
+require_relative 'openkick/controller_runtime'
+require_relative 'openkick/index'
+require_relative 'openkick/index_cache'
+require_relative 'openkick/index_options'
+require_relative 'openkick/indexer'
+require_relative 'openkick/hash_wrapper'
+require_relative 'openkick/log_subscriber'
+require_relative 'openkick/model'
+require_relative 'openkick/multi_search'
+require_relative 'openkick/query'
+require_relative 'openkick/reindex_queue'
+require_relative 'openkick/record_data'
+require_relative 'openkick/record_indexer'
+require_relative 'openkick/relation'
+require_relative 'openkick/relation_indexer'
+require_relative 'openkick/results'
+require_relative 'openkick/raw'
+require_relative 'openkick/version'
+require_relative 'openkick/where'
 
 # integrations
-require_relative "openkick/railtie" if defined?(Rails)
+require_relative 'openkick/railtie' if defined?(Rails)
 
 module Openkick
   # requires faraday
-  autoload :Middleware, "openkick/middleware"
+  autoload :Middleware, 'openkick/middleware'
 
   # background jobs
-  autoload :BulkReindexJob,  "openkick/bulk_reindex_job"
-  autoload :ProcessBatchJob, "openkick/process_batch_job"
-  autoload :ProcessQueueJob, "openkick/process_queue_job"
-  autoload :ReindexV2Job,    "openkick/reindex_v2_job"
+  autoload :BulkReindexJob,  'openkick/bulk_reindex_job'
+  autoload :ProcessBatchJob, 'openkick/process_batch_job'
+  autoload :ProcessQueueJob, 'openkick/process_queue_job'
+  autoload :ReindexV2Job,    'openkick/reindex_v2_job'
 
   # errors
   class Error < StandardError; end
   class MissingIndexError < Error; end
+
   class UnsupportedVersionError < Error
     def message
-      "This version of Openkick requires Elasticsearch 7+ or OpenSearch 1+"
+      'This version of Openkick requires Elasticsearch 7+ or OpenSearch 1+'
     end
   end
+
   class InvalidQueryError < Error; end
   class DangerousOperation < Error; end
   class ImportError < Error; end
 
   class << self
-    attr_accessor :search_method_name, :timeout, :models, :client_options, :redis, :index_prefix, :index_suffix, :queue_name, :model_options, :client_type
+    attr_accessor :search_method_name, :timeout, :models, :client_options, :redis, :index_prefix, :index_suffix,
+                  :queue_name, :model_options, :client_type
     attr_writer :client, :env, :search_timeout
     attr_reader :aws_credentials
   end
@@ -73,36 +76,36 @@ module Openkick
         if self.client_type
           self.client_type
         elsif defined?(OpenSearch::Client) && defined?(Elasticsearch::Client)
-          raise Error, "Multiple clients found - set Openkick.client_type = :elasticsearch or :opensearch"
+          raise Error, 'Multiple clients found - set Openkick.client_type = :elasticsearch or :opensearch'
         elsif defined?(OpenSearch::Client)
           :opensearch
         elsif defined?(Elasticsearch::Client)
           :elasticsearch
         else
-          raise Error, "No client found - install the `elasticsearch` or `opensearch-ruby` gem"
+          raise Error, 'No client found - install the `elasticsearch` or `opensearch-ruby` gem'
         end
 
       # check after client to ensure faraday is installed
       # TODO remove in Openkick 6
-      if defined?(Typhoeus) && Gem::Version.new(Faraday::VERSION) < Gem::Version.new("0.14.0")
-        require "typhoeus/adapters/faraday"
+      if defined?(Typhoeus) && Gem::Version.new(Faraday::VERSION) < Gem::Version.new('0.14.0')
+        require 'typhoeus/adapters/faraday'
       end
 
       if client_type == :opensearch
         OpenSearch::Client.new({
-          url: ENV["OPENSEARCH_URL"],
-          transport_options: {request: {timeout: timeout}, headers: {content_type: "application/json"}},
+          url: ENV.fetch('OPENSEARCH_URL', nil),
+          transport_options: { request: { timeout: }, headers: { content_type: 'application/json' } },
           retry_on_failure: 2
         }.deep_merge(client_options)) do |f|
           f.use Openkick::Middleware
           f.request :aws_sigv4, signer_middleware_aws_params if aws_credentials
         end
       else
-        raise Error, "The `elasticsearch` gem must be 7+" if Elasticsearch::VERSION.to_i < 7
+        raise Error, 'The `elasticsearch` gem must be 7+' if Elasticsearch::VERSION.to_i < 7
 
         Elasticsearch::Client.new({
-          url: ENV["ELASTICSEARCH_URL"],
-          transport_options: {request: {timeout: timeout}, headers: {content_type: "application/json"}},
+          url: ENV.fetch('ELASTICSEARCH_URL', nil),
+          transport_options: { request: { timeout: }, headers: { content_type: 'application/json' } },
           retry_on_failure: 2
         }.deep_merge(client_options)) do |f|
           f.use Openkick::Middleware
@@ -113,7 +116,7 @@ module Openkick
   end
 
   def self.env
-    @env ||= ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
+    @env ||= ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
   end
 
   def self.search_timeout
@@ -126,29 +129,29 @@ module Openkick
   end
 
   def self.server_version
-    @server_version ||= server_info["version"]["number"]
+    @server_version ||= server_info['version']['number']
   end
 
   def self.opensearch?
-    unless defined?(@opensearch)
-      @opensearch = server_info["version"]["distribution"] == "opensearch"
-    end
+    @opensearch = server_info['version']['distribution'] == 'opensearch' unless defined?(@opensearch)
     @opensearch
   end
 
-  # TODO always check true version in Openkick 6
+  # TODO: always check true version in Openkick 6
   def self.server_below?(version, true_version = false)
-    server_version = !true_version && opensearch? ? "7.10.2" : self.server_version
-    Gem::Version.new(server_version.split("-")[0]) < Gem::Version.new(version.split("-")[0])
+    server_version = !true_version && opensearch? ? '7.10.2' : self.server_version
+    Gem::Version.new(server_version.split('-')[0]) < Gem::Version.new(version.split('-')[0])
   end
 
-  def self.search(term = "*", model: nil, **options, &block)
+  def self.search(term = '*', model: nil, **options, &block)
     options = options.dup
     klass = model
 
     # convert index_name into models if possible
     # this should allow for easier upgrade
-    if options[:index_name] && !options[:models] && Array(options[:index_name]).all? { |v| v.respond_to?(:openkick_index) }
+    if options[:index_name] && !options[:models] && Array(options[:index_name]).all? do |v|
+         v.respond_to?(:openkick_index)
+       end
       options[:models] = options.delete(:index_name)
     end
 
@@ -161,19 +164,19 @@ module Openkick
       end
     end
 
-    if klass
-      if (options[:models] && Array(options[:models]) != [klass]) || Array(options[:index_name]).any? { |v| v.respond_to?(:openkick_index) && v != klass }
-        raise ArgumentError, "Use Openkick.search to search multiple models"
-      end
+    if klass && ((options[:models] && Array(options[:models]) != [klass]) || Array(options[:index_name]).any? do |v|
+                   v.respond_to?(:openkick_index) && v != klass
+                 end)
+      raise ArgumentError, 'Use Openkick.search to search multiple models'
     end
 
-    # TODO remove in Openkick 6
+    # TODO: remove in Openkick 6
     if options[:execute] == false
-      Openkick.warn("The execute option is no longer needed")
+      Openkick.warn('The execute option is no longer needed')
       options.delete(:execute)
     end
 
-    options = options.merge(block: block) if block
+    options = options.merge(block:) if block
     Relation.new(klass, term, **options)
   end
 
@@ -182,10 +185,10 @@ module Openkick
 
     queries = queries.map { |q| q.send(:query) }
     event = {
-      name: "Multi Search",
+      name: 'Multi Search',
       body: queries.flat_map { |q| [q.params.except(:body).to_json, q.body.to_json] }.map { |v| "#{v}\n" }.join
     }
-    ActiveSupport::Notifications.instrument("multi_search.openkick", event) do
+    ActiveSupport::Notifications.instrument('multi_search.openkick', event) do
       MultiSearch.new(queries).perform
     end
   end
@@ -227,10 +230,10 @@ module Openkick
           if message
             message.call(event)
           else
-            event[:name] = "Bulk"
+            event[:name] = 'Bulk'
             event[:count] = indexer.queued_items.size
           end
-          ActiveSupport::Notifications.instrument("request.openkick", event) do
+          ActiveSupport::Notifications.instrument('request.openkick', event) do
             indexer.perform
           end
         end
@@ -244,31 +247,29 @@ module Openkick
   end
 
   def self.aws_credentials=(creds)
-    require "faraday_middleware/aws_sigv4"
+    require 'faraday_middleware/aws_sigv4'
 
     @aws_credentials = creds
     @client = nil # reset client
   end
 
   def self.reindex_status(index_name)
-    raise Error, "Redis not configured" unless redis
+    raise Error, 'Redis not configured' unless redis
 
     batches_left = Index.new(index_name).batches_left
     {
       completed: batches_left == 0,
-      batches_left: batches_left
+      batches_left:
     }
   end
 
-  def self.with_redis
-    if redis
-      if redis.respond_to?(:with)
-        redis.with do |r|
-          yield r
-        end
-      else
-        yield redis
-      end
+  def self.with_redis(&)
+    return unless redis
+
+    if redis.respond_to?(:with)
+      redis.with(&)
+    else
+      yield redis
     end
   end
 
@@ -281,14 +282,14 @@ module Openkick
     relation =
       if relation.respond_to?(:primary_key)
         primary_key = relation.primary_key
-        raise Error, "Need primary key to load records" if !primary_key
+        raise Error, 'Need primary key to load records' unless primary_key
 
         relation.where(primary_key => ids)
       elsif relation.respond_to?(:queryable)
         relation.queryable.for_ids(ids)
       end
 
-    raise Error, "Not sure how to load records" if !relation
+    raise Error, 'Not sure how to load records' unless relation
 
     relation
   end
@@ -297,14 +298,11 @@ module Openkick
   def self.load_model(class_name, allow_child: false)
     model = class_name.safe_constantize
     raise Error, "Could not find class: #{class_name}" unless model
+
     if allow_child
-      unless model.respond_to?(:openkick_klass)
-        raise Error, "#{class_name} is not a openkick model"
-      end
+      raise Error, "#{class_name} is not a openkick model" unless model.respond_to?(:openkick_klass)
     else
-      unless Openkick.models.include?(model)
-        raise Error, "#{class_name} is not a openkick model"
-      end
+      raise Error, "#{class_name} is not a openkick model" unless Openkick.models.include?(model)
     end
     model
   end
@@ -326,7 +324,7 @@ module Openkick
 
   # private
   def self.signer_middleware_aws_params
-    {service: "es", region: "us-east-1"}.merge(aws_credentials)
+    { service: 'es', region: 'us-east-1' }.merge(aws_credentials)
   end
 
   # private
@@ -344,7 +342,7 @@ module Openkick
   # private
   def self.scope(model)
     # safety check to make sure used properly in code
-    raise Error, "Cannot scope relation" if relation?(model)
+    raise Error, 'Cannot scope relation' if relation?(model)
 
     if model.openkick_options[:unscope]
       model.unscoped
@@ -356,22 +354,22 @@ module Openkick
   # private
   def self.not_found_error?(e)
     (defined?(Elastic::Transport) && e.is_a?(Elastic::Transport::Transport::Errors::NotFound)) ||
-    (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Errors::NotFound)) ||
-    (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Errors::NotFound))
+      (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Errors::NotFound)) ||
+      (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Errors::NotFound))
   end
 
   # private
   def self.transport_error?(e)
     (defined?(Elastic::Transport) && e.is_a?(Elastic::Transport::Transport::Error)) ||
-    (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Error)) ||
-    (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Error))
+      (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Error)) ||
+      (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Error))
   end
 
   # private
   def self.not_allowed_error?(e)
     (defined?(Elastic::Transport) && e.is_a?(Elastic::Transport::Transport::Errors::MethodNotAllowed)) ||
-    (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Errors::MethodNotAllowed)) ||
-    (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Errors::MethodNotAllowed))
+      (defined?(Elasticsearch::Transport) && e.is_a?(Elasticsearch::Transport::Transport::Errors::MethodNotAllowed)) ||
+      (defined?(OpenSearch) && e.is_a?(OpenSearch::Transport::Transport::Errors::MethodNotAllowed))
   end
 end
 

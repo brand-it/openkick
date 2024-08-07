@@ -1,17 +1,22 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 
 gemspec
 
-gem "rake"
-gem "minitest", ">= 5"
-gem "sqlite3", "< 2"
-gem "activerecord", "~> 7.1.0"
-gem "actionpack", "~> 7.1.0"
-gem "activejob", "~> 7.1.0", require: "active_job"
-gem "elasticsearch", "~> 8"
-gem "redis-client"
-gem "connection_pool"
-gem "kaminari"
-gem "gemoji-parser"
-gem "parallel_tests"
-gem "typhoeus"
+gem 'actionpack', '~> 7.1.0'
+gem 'activejob', '~> 7.1.0', require: 'active_job'
+gem 'activerecord', '~> 7.1.0'
+gem 'connection_pool'
+gem 'gemoji-parser'
+gem 'kaminari'
+gem 'minitest', '>= 5'
+gem 'opensearch-ruby'
+gem 'parallel_tests'
+gem 'rake'
+gem 'redis-client'
+gem 'rubocop'
+gem 'rubocop-minitest', '~> 0.35.1'
+gem 'rubocop-rake', '~> 0.6.0'
+gem 'sqlite3', '< 2'
+gem 'typhoeus'

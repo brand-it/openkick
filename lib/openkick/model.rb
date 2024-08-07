@@ -3,14 +3,14 @@ module Openkick
     def openkick(**options)
       options = Openkick.model_options.merge(options)
 
-      unknown_keywords = options.keys - [:_all, :_type, :batch_size, :callbacks, :case_sensitive, :conversions, :deep_paging, :default_fields,
-        :filterable, :geo_shape, :highlight, :ignore_above, :index_name, :index_prefix, :inheritance, :language,
-        :locations, :mappings, :match, :max_result_window, :merge_mappings, :routing, :searchable, :search_synonyms, :settings, :similarity,
-        :special_characters, :stem, :stemmer, :stem_conversions, :stem_exclusion, :stemmer_override, :suggest, :synonyms, :text_end,
-        :text_middle, :text_start, :unscope, :word, :word_end, :word_middle, :word_start]
-      raise ArgumentError, "unknown keywords: #{unknown_keywords.join(", ")}" if unknown_keywords.any?
+      unknown_keywords = options.keys - %i[_all _type batch_size callbacks case_sensitive conversions deep_paging default_fields
+                                           filterable geo_shape highlight ignore_above index_name index_prefix inheritance language
+                                           locations mappings match max_result_window merge_mappings routing searchable search_synonyms settings similarity
+                                           special_characters stem stemmer stem_conversions stem_exclusion stemmer_override suggest synonyms text_end
+                                           text_middle text_start unscope word word_end word_middle word_start]
+      raise ArgumentError, "unknown keywords: #{unknown_keywords.join(', ')}" if unknown_keywords.any?
 
-      raise "Only call openkick once per model" if respond_to?(:openkick_index)
+      raise 'Only call openkick once per model' if respond_to?(:openkick_index)
 
       Openkick.models << self
 
@@ -19,7 +19,7 @@ module Openkick
 
       callbacks = options.key?(:callbacks) ? options[:callbacks] : :inline
       unless [:inline, true, false, :async, :queue].include?(callbacks)
-        raise ArgumentError, "Invalid value for callbacks"
+        raise ArgumentError, 'Invalid value for callbacks'
       end
 
       base = self
@@ -27,25 +27,33 @@ module Openkick
       mod = Module.new
       include(mod)
       mod.module_eval do
-        def reindex(method_name = nil, mode: nil, refresh: false)
-          self.class.openkick_index.reindex([self], method_name: method_name, mode: mode, refresh: refresh, single: true)
-        end unless base.method_defined?(:reindex)
+        unless base.method_defined?(:reindex)
+          def reindex(method_name = nil, mode: nil, refresh: false)
+            self.class.openkick_index.reindex([self], method_name:, mode:, refresh:, single: true)
+          end
+        end
 
-        def similar(**options)
-          self.class.openkick_index.similar_record(self, **options)
-        end unless base.method_defined?(:similar)
+        unless base.method_defined?(:similar)
+          def similar(**options)
+            self.class.openkick_index.similar_record(self, **options)
+          end
+        end
 
-        def search_data
-          data = respond_to?(:to_hash) ? to_hash : serializable_hash
-          data.delete("id")
-          data.delete("_id")
-          data.delete("_type")
-          data
-        end unless base.method_defined?(:search_data)
+        unless base.method_defined?(:search_data)
+          def search_data
+            data = respond_to?(:to_hash) ? to_hash : serializable_hash
+            data.delete('id')
+            data.delete('_id')
+            data.delete('_type')
+            data
+          end
+        end
 
-        def should_index?
-          true
-        end unless base.method_defined?(:should_index?)
+        unless base.method_defined?(:should_index?)
+          def should_index?
+            true
+          end
+        end
       end
 
       class_eval do
@@ -56,10 +64,8 @@ module Openkick
         class_variable_set :@@openkick_index_cache, Openkick::IndexCache.new
 
         class << self
-          def openkick_search(term = "*", **options, &block)
-            if Openkick.relation?(self)
-              raise Openkick::Error, "search must be called on model, not relation"
-            end
+          def openkick_search(term = '*', **options, &block)
+            raise Openkick::Error, 'search must be called on model, not relation' if Openkick.relation?(self)
 
             Openkick.search(term, model: self, **options, &block)
           end
@@ -74,7 +80,7 @@ module Openkick
           alias_method :search_index, :openkick_index unless method_defined?(:search_index)
 
           def openkick_reindex(method_name = nil, **options)
-            openkick_index.reindex(self, method_name: method_name, **options)
+            openkick_index.reindex(self, method_name:, **options)
           end
           alias_method :reindex, :openkick_reindex unless method_defined?(:reindex)
 
@@ -88,9 +94,9 @@ module Openkick
               if options[:index_name]
                 options[:index_name]
               elsif options[:index_prefix].respond_to?(:call)
-                -> { [options[:index_prefix].call, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join("_") }
+                -> { [options[:index_prefix].call, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join('_') }
               else
-                [options.key?(:index_prefix) ? options[:index_prefix] : Openkick.index_prefix, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join("_")
+                [options.key?(:index_prefix) ? options[:index_prefix] : Openkick.index_prefix, model_name.plural, Openkick.env, Openkick.index_suffix].compact.join('_')
               end
             end
           end

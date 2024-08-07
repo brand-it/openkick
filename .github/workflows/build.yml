@@ -1,7 +1,20 @@
 name: build
-on: [push, pull_request]
+on: [pull_request]
 jobs:
-  build:
+  rubocop:
+    concurrency:
+      group: PR-RUBOCOP-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+    - name: Run tests
+      run: bundle exec rubocop
+  test:
     strategy:
       fail-fast: false
       matrix:
@@ -10,7 +23,7 @@ jobs:
             gemfile: gemfiles/activerecord72.gemfile
             elasticsearch: 8
           - ruby: 3.3
-            gemfile: Gemfile
+            gemfile: gemfiles/elasticsearch.gemfile
             elasticsearch: 8.13.4
           - ruby: 3.3
             gemfile: gemfiles/opensearch3.gemfile

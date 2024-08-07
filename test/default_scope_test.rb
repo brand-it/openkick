@@ -1,4 +1,4 @@
-require_relative "test_helper"
+require_relative 'test_helper'
 
 class DefaultScopeTest < Minitest::Test
   def setup
@@ -7,22 +7,23 @@ class DefaultScopeTest < Minitest::Test
 
   def test_reindex
     store [
-      {name: "Test", active: true},
-      {name: "Test 2", active: false}
+      { name: 'Test', active: true },
+      { name: 'Test 2', active: false }
     ], reindex: false
 
     Band.reindex
-    assert_search "*", ["Test"], {load: false}
+
+    assert_search '*', ['Test'], { load: false }
   end
 
   def test_search
     Band.reindex
-    Band.search("*") # test works
+    Band.search('*') # test works
 
     error = assert_raises(Openkick::Error) do
-      Band.all.search("*")
+      Band.all.search('*')
     end
-    assert_equal "search must be called on model, not relation", error.message
+    assert_equal 'search must be called on model, not relation', error.message
   end
 
   def default_model

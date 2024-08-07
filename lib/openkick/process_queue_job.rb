@@ -8,12 +8,12 @@ module Openkick
       limit = model.openkick_options[:batch_size] || 1000
 
       loop do
-        record_ids = index.reindex_queue.reserve(limit: limit)
+        record_ids = index.reindex_queue.reserve(limit:)
         if record_ids.any?
           batch_options = {
-            class_name: class_name,
+            class_name:,
             record_ids: record_ids.uniq,
-            index_name: index_name
+            index_name:
           }
 
           if inline
@@ -23,7 +23,7 @@ module Openkick
             Openkick::ProcessBatchJob.perform_later(**batch_options)
           end
 
-          # TODO when moving to reliable queuing, mark as complete
+          # TODO: when moving to reliable queuing, mark as complete
         end
         break unless record_ids.size == limit
       end

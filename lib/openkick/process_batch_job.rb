@@ -9,8 +9,8 @@ module Openkick
       items =
         record_ids.map do |r|
           parts = r.split(/(?<!\|)\|(?!\|)/, 2)
-            .map { |v| v.gsub("||", "|") }
-          {id: parts[0], routing: parts[1]}
+                   .map { |v| v.gsub('||', '|') }
+          { id: parts[0], routing: parts[1] }
         end
 
       relation = Openkick.scope(model)

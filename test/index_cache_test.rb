@@ -1,4 +1,4 @@
-require_relative "test_helper"
+require_relative 'test_helper'
 
 class IndexCacheTest < Minitest::Test
   def setup
@@ -7,6 +7,7 @@ class IndexCacheTest < Minitest::Test
 
   def test_default
     object_id = Product.openkick_index.object_id
+
     3.times do
       assert_equal object_id, Product.openkick_index.object_id
     end
@@ -14,13 +15,16 @@ class IndexCacheTest < Minitest::Test
 
   def test_max_size
     starting_ids = object_ids(20)
+
     assert_equal starting_ids, object_ids(20)
-    Product.openkick_index(name: "other")
+    Product.openkick_index(name: 'other')
+
     refute_equal starting_ids, object_ids(20)
   end
 
   def test_thread_safe
     object_ids = with_threads { object_ids(20) }
+
     assert_equal object_ids[0], object_ids[1]
     assert_equal object_ids[0], object_ids[2]
   end
@@ -37,11 +41,11 @@ class IndexCacheTest < Minitest::Test
     count.times.map { |i| Product.openkick_index(name: "index#{i}").object_id }
   end
 
-  def with_threads
+  def with_threads(&block)
     previous = Thread.report_on_exception
     begin
       Thread.report_on_exception = true
-      3.times.map { Thread.new { yield } }.map(&:join).map(&:value)
+      3.times.map { Thread.new(&block) }.map(&:join).map(&:value)
     ensure
       Thread.report_on_exception = previous
     end
