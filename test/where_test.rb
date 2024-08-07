@@ -215,11 +215,13 @@ class WhereTest < Minitest::Test
     assert_search '*', ['Product+ABC'], where: { name: { like: 'Product+A%' } }
     assert_search '*', ['Product*ABC'], where: { name: { like: 'Product*A%' } }
     assert_search '*', ['Product|ABC'], where: { name: { like: 'Product|A%' } }
-    assert_search '*', ['Product{ABC}'], where: { name: { like: '%<ABC>s' } }
+    # rubocop:disable Style/FormatStringToken
+    assert_search '*', ['Product{ABC}'], where: { name: { like: '%{ABC}' } }
     assert_search '*', ['Product[ABC]'], where: { name: { like: '%[ABC]' } }
     assert_search '*', ['Product(ABC)'], where: { name: { like: '%(ABC)' } }
     assert_search '*', ['Product"ABC"'], where: { name: { like: '%"ABC"' } }
     assert_search '*', ['Product\\ABC'], where: { name: { like: 'Product\\A%' } }
+    # rubocop:enable Style/FormatStringToken
   end
 
   def test_like_optional_operators
