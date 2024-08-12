@@ -11,7 +11,7 @@ module Openkick
       models model_includes offset operator order padding
       page per_page profile request_params routing scope_results
       scroll select similar smart_aggs suggest total_entries
-      track type where rerank
+      track type where rerank boost_by_field_value neural
     ].freeze
 
     @@metric_aggs = %i[avg cardinality max min sum]
@@ -90,6 +90,7 @@ module Openkick
       params[:type] = @type if @type
       params[:routing] = @routing if @routing
       params[:scroll] = @scroll if @scroll
+      params.merge!(search_pipeline: options[:rerank][:search_pipeline]) if options.dig(:rerank, :search_pipline)
       params.merge!(options[:request_params]) if options[:request_params]
       params
     end
@@ -442,6 +443,8 @@ module Openkick
             must_not.concat(set_exclude(exclude_field, exclude_analyzer)) if options[:exclude]
           end
 
+          Opensearch::Neural.call(term, queries:, options:)
+
           # all + exclude option
           if all
             query = {
@@ -507,9 +510,10 @@ module Openkick
         set_boost_where(custom_filters)
         set_boost_by_distance(custom_filters) if options[:boost_by_distance]
         set_boost_by_recency(custom_filters) if options[:boost_by_recency]
+        FieldValueFactor.call(options[:boost_by_field_value], custom_filters:)
+        Opensearch::Reranking.call(term, payload:, options:)
 
         payload[:query] = build_query(query, filters, should, must_not, custom_filters, multiply_filters)
-        Opensearch::Reranking.call(term, payload:, options:)
 
         payload[:explain] = options[:explain] if options[:explain]
         payload[:profile] = options[:profile] if options[:profile]
@@ -561,7 +565,8 @@ module Openkick
       payload[:track_total_hits] = true if track_total_hits?
 
       # merge more body options
-      payload = payload.deep_merge(options[:body_options]) if options[:body_options]
+
+      payload = DeepMerge.merge_hash!(payload, options[:body_options]) if options[:body_options]
 
       # run block
       options[:block].call(payload) if options[:block]

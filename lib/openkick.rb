@@ -10,7 +10,10 @@ require 'hashie'
 require 'forwardable'
 
 # Classes
+require_relative 'openkick/query/deep_merge'
+require_relative 'openkick/query/field_value_factor'
 require_relative 'openkick/query/fields'
+require_relative 'openkick/query/opensearch/neural'
 require_relative 'openkick/query/opensearch/reranking'
 
 # modules

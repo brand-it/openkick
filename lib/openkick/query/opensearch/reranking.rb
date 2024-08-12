@@ -24,10 +24,16 @@ module Openkick
           @payload[:ext] = {
             rerank: {
               query_context: {
-                query_text: @term
+                query_text: term_present? ? @term : ''
               }
             }
           }
+        end
+
+        private
+
+        def term_present?
+          @term.to_s != '' && @term != '*'
         end
       end
     end
