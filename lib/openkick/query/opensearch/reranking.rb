@@ -9,7 +9,7 @@ module Openkick
           @payload = payload
           @search_pipeline = options.dig(:rerank, :search_pipeline)
           @rerank = options.key?(:rerank)
-          return unless @search_pipeline.to_s == '' && Openkick.server_below?('2.13')
+          return unless @search_pipeline.to_s == '' && Openkick.client.server_below?('2.13')
 
           raise 'search_pipline is required when using opensearch version 2.13 or older'
         end
@@ -19,7 +19,7 @@ module Openkick
         end
 
         def call
-          return unless Openkick.opensearch? && @rerank
+          return unless Openkick.client.opensearch? && @rerank
 
           @payload[:ext] = {
             rerank: {

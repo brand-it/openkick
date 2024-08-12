@@ -6,8 +6,8 @@ Mongoid.configure do |config|
 end
 
 class Product
-  include Mongoid::Document
-  include Mongoid::Timestamps
+  include ::Mongoid::Document
+  include ::Mongoid::Timestamps
 
   field :name
   field :store_id, type: Integer
@@ -24,27 +24,27 @@ class Product
 end
 
 class Store
-  include Mongoid::Document
+  include ::Mongoid::Document
   has_many :products
 
   field :name
 end
 
 class Region
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
   field :text
 end
 
 class Speaker
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
 end
 
 class Animal
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
 end
@@ -56,32 +56,32 @@ class Cat < Animal
 end
 
 class Sku
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
 end
 
 class Song
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
 end
 
 class Band
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
-  field :active, type: Mongoid::Boolean
+  field :active, type: ::Mongoid::Boolean
 
   default_scope -> { where(active: true).order(name: 1) }
 end
 
 class Artist
-  include Mongoid::Document
+  include ::Mongoid::Document
 
   field :name
-  field :active, type: Mongoid::Boolean
-  field :should_index, type: Mongoid::Boolean
+  field :active, type: ::Mongoid::Boolean
+  field :should_index, type: ::Mongoid::Boolean
 
   default_scope -> { where(active: true).order(name: 1) }
 end

@@ -1,6 +1,7 @@
 module Openkick
   class Results
     include Enumerable
+    include Helpers
     extend Forwardable
 
     # TODO: remove klass and options in 6.0
@@ -189,7 +190,7 @@ module Openkick
           # TODO: Active Support notifications for this scroll call
           Results.new(@klass, Openkick.client.scroll(scroll: options[:scroll], body: { scroll_id: }), @options)
         rescue StandardError => e
-          if Openkick.not_found_error?(e) && e.message =~ /search_context_missing_exception/i
+          if not_found_error?(e) && e.message =~ /search_context_missing_exception/i
             raise Error, 'Scroll id has expired'
           end
 
@@ -204,7 +205,7 @@ module Openkick
       # but there is a cost to open scrolls
       Openkick.client.clear_scroll(scroll_id:)
     rescue StandardError => e
-      raise e unless Openkick.transport_error?(e)
+      raise e unless transport_error?(e)
     end
 
     private
@@ -297,14 +298,14 @@ module Openkick
     def build_hits
       @build_hits ||= begin
         if missing_records.any?
-          Openkick.warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join('/')} #{v[:id]}" }.join(', ')}")
+          warn("Records in search index do not exist in database: #{missing_records.map { |v| "#{Array(v[:model]).map(&:model_name).sort.join('/')} #{v[:id]}" }.join(', ')}")
         end
         with_hit_and_missing_records[0]
       end
     end
 
     def results_query(records, hits)
-      records = Openkick.scope(records)
+      records = scope(records)
 
       ids = hits.map { |hit| hit['_id'] }
       if options[:includes] || options[:model_includes]
@@ -317,7 +318,7 @@ module Openkick
 
       records = options[:scope_results].call(records) if options[:scope_results]
 
-      Openkick.load_records(records, ids)
+      load_records(records, ids)
     end
 
     def combine_includes(result, inc)

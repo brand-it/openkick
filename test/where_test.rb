@@ -127,7 +127,6 @@ class WhereTest < Minitest::Test
 
   def test_special_regexp
     store_names ['Product <A>', 'Item <B>']
-
     assert_search '*', ['Product <A>'], where: { name: /\APro.+<.+\z/ }
   end
 
@@ -405,12 +404,12 @@ class WhereTest < Minitest::Test
       assert_search 'san', ['San Francisco', 'San Antonio'], where: { location: { geo_polygon: { points: polygon } } }
     end
     # only warns for elasticsearch gem < 8
-    # unless Openkick.server_below?("7.12.0")
+    # unless Openkick.client.server_below?("7.12.0")
     #   assert_match "Deprecated field [geo_polygon] used", stderr
     # end
 
     # Field [location] is not of type [geo_shape] but of type [geo_point] error for previous versions
-    skip if Openkick.server_below?('7.14.0')
+    skip if Openkick.client.server_below?('7.14.0')
 
     polygon << polygon.first
     # see test/geo_shape_test.rb for other geo_shape tests
@@ -490,6 +489,6 @@ class WhereTest < Minitest::Test
   end
 
   def case_insensitive_supported?
-    !Openkick.server_below?('7.10.0')
+    !Openkick.client.server_below?('7.10.0')
   end
 end

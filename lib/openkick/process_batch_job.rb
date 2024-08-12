@@ -1,5 +1,6 @@
 module Openkick
   class ProcessBatchJob < ActiveJob::Base
+    include Helpers
     queue_as { Openkick.queue_name }
 
     def perform(class_name:, record_ids:, index_name: nil)
@@ -13,7 +14,7 @@ module Openkick
           { id: parts[0], routing: parts[1] }
         end
 
-      relation = Openkick.scope(model)
+      relation = scope(model)
       RecordIndexer.new(index).reindex_items(relation, items, method_name: nil)
     end
   end

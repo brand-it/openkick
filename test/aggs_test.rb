@@ -279,6 +279,6 @@ class AggsTest < Minitest::Test
   end
 
   def interval_key
-    Openkick.server_below?('7.4.0') ? :interval : :calendar_interval
+    Openkick.client.server_below?('7.4.0') ? :interval : :calendar_interval
   end
 end

@@ -75,7 +75,7 @@ class SearchSynonymsTest < Minitest::Test
   end
 
   def test_reload_synonyms
-    if Openkick.server_below?('7.3.0')
+    if Openkick.client.server_below?('7.3.0')
       error = assert_raises(Openkick::Error) do
         Speaker.openkick_index.reload_synonyms
       end
@@ -86,7 +86,7 @@ class SearchSynonymsTest < Minitest::Test
   end
 
   def test_reload_synonyms_better
-    skip unless ENV['ES_PATH'] && !Openkick.server_below?('7.3.0')
+    skip unless ENV['ES_PATH'] && !Openkick.client.server_below?('7.3.0')
 
     write_synonyms('test,hello')
 
