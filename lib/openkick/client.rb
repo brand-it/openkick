@@ -4,15 +4,6 @@ module Openkick
   class Client
     extend Forwardable
 
-    def_delegators :client,
-                   :indices,
-                   :search,
-                   :clear_scroll,
-                   :bulk,
-                   :transport,
-                   :msearch,
-                   :scroll
-
     def initialize(settings)
       @settings = settings
     end
@@ -43,6 +34,18 @@ module Openkick
     def server_below?(expected_version, true_version: false)
       server_version = !true_version && opensearch? ? '7.10.2' : version
       Gem::Version.new(server_version.split('-')[0]) < Gem::Version.new(expected_version.split('-')[0])
+    end
+
+    def method_missing(method_name, ...)
+      if client.respond_to?(method_name)
+        client.send(method_name, ...)
+      else
+        super
+      end
+    end
+
+    def respond_to_missing?(method_name, include_private = false)
+      client.respond_to?(method_name, include_private) || super
     end
 
     private
