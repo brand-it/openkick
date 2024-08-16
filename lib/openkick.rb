@@ -181,7 +181,7 @@ ActiveSupport.on_load(:active_record) do
 end
 
 ActiveSupport.on_load(:mongoid) do
-  Mongoid::Document::ClassMethods.extend Openkick::Model::Base
+  Mongoid::Document::ClassMethods.include Openkick::Model::Base
 end
 
 ActiveSupport.on_load(:action_controller) do
