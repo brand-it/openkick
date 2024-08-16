@@ -1,6 +1,7 @@
 module Openkick
   class Query
     include Enumerable
+    include Helpers
     extend Forwardable
     KNOWN_KEYWORDS = %i[
       aggs block body body_options boost
@@ -16,8 +17,7 @@ module Openkick
 
     @@metric_aggs = %i[avg cardinality max min sum]
 
-    attr_reader :klass, :term, :options, :fields
-    attr_accessor :body
+    attr_reader :klass, :term, :options, :fields, :body
 
     def_delegators :execute, :map, :each, :any?, :empty?, :size, :length, :slice, :[], :to_ary,
                    :results, :suggestions, :each_with_hit, :with_details, :aggregations, :aggs,
@@ -154,7 +154,7 @@ module Openkick
 
       if options[:debug]
         puts "Openkick Version: #{Openkick::VERSION}"
-        puts "Elasticsearch Version: #{Openkick.server_version}"
+        puts "Elasticsearch Version: #{Openkick.client.version}"
         puts
 
         puts 'Model Openkick Options'
@@ -380,7 +380,7 @@ module Openkick
             field_misspellings = misspellings && (!misspellings_fields || misspellings_fields.include?(base_field(field)))
 
             if field == '_all' || field.end_with?('.analyzed')
-              unless operator.to_s == 'and' || field_misspellings == false || (!below73? && !track_total_hits?) || match_type == :match_phrase || !below80? || Openkick.opensearch?
+              unless operator.to_s == 'and' || field_misspellings == false || (!below73? && !track_total_hits?) || match_type == :match_phrase || !below80? || Openkick.client.opensearch?
                 shared_options[:cutoff_frequency] = 0.001
               end
               qs << shared_options.merge(analyzer: 'openkick_search')
@@ -479,7 +479,7 @@ module Openkick
           # aliases are not supported with _index in ES below 7.5
           # see https://github.com/elastic/elasticsearch/pull/46640
           if below75?
-            Openkick.warn('Passing child models to models option throws off hits and pagination - use type option instead')
+            warn('Passing child models to models option throws off hits and pagination - use type option instead')
           else
             index_type_or =
               models.map do |m|
@@ -992,7 +992,7 @@ module Openkick
                 # TODO: add support for false in Openkick 6
                 if op_value != true
                   # TODO: raise error in Openkick 6
-                  Openkick.warn('Passing a value other than true to exists is not supported')
+                  warn('Passing a value other than true to exists is not supported')
                 end
                 filters << { exists: { field: } }
               else
@@ -1151,19 +1151,19 @@ module Openkick
     end
 
     def below73?
-      Openkick.server_below?('7.3.0')
+      Openkick.client.server_below?('7.3.0')
     end
 
     def below75?
-      Openkick.server_below?('7.5.0')
+      Openkick.client.server_below?('7.5.0')
     end
 
     def below710?
-      Openkick.server_below?('7.10.0')
+      Openkick.client.server_below?('7.10.0')
     end
 
     def below80?
-      Openkick.server_below?('8.0.0')
+      Openkick.client.server_below?('8.0.0')
     end
   end
 end

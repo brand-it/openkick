@@ -2,6 +2,7 @@
 # used to aggregate bulk callbacks across models
 module Openkick
   class Indexer
+    include Helpers
     attr_reader :queued_items
 
     def initialize
@@ -10,7 +11,7 @@ module Openkick
 
     def queue(items)
       @queued_items.concat(items)
-      perform unless Openkick.callbacks_value == :bulk
+      perform unless callbacks_value == :bulk
     end
 
     def perform

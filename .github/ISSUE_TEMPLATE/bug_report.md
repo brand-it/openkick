@@ -32,7 +32,7 @@ gemfile do
 end
 
 puts "Openkick version: #{Openkick::VERSION}"
-puts "Server version: #{Openkick.server_version}"
+puts "Server version: #{Openkick.client.version}"
 
 ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
 ActiveJob::Base.queue_adapter = :inline

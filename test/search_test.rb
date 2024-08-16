@@ -10,7 +10,6 @@ class SearchTest < Minitest::Test
 
   def test_body
     store_names ['Dollar Tree'], Store
-
     assert_equal ['Dollar Tree'], Store.search(body: { query: { match: { name: 'dollar' } } }, load: false).map(&:name)
   end
 
@@ -60,7 +59,7 @@ class SearchTest < Minitest::Test
   end
 
   def test_unsupported_version
-    skip if Openkick.opensearch?
+    skip if Openkick.client.opensearch?
 
     raises_exception = lambda do |*|
       if defined?(Elastic::Transport)

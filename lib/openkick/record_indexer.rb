@@ -1,5 +1,6 @@
 module Openkick
   class RecordIndexer
+    include Helpers
     attr_reader :index
 
     def initialize(index)
@@ -58,7 +59,7 @@ module Openkick
       routing = items.to_h { |r| [r[:id], r[:routing]] }
       record_ids = routing.keys
 
-      relation = Openkick.load_records(klass, record_ids)
+      relation = load_records(klass, record_ids)
       # call search_import even for single records for nested associations
       relation = relation.search_import if relation.respond_to?(:search_import)
       records = relation.select(&:should_index?)
@@ -97,7 +98,7 @@ module Openkick
     end
 
     def maybe_bulk(index_records, delete_records, method_name, single, &block)
-      if Openkick.callbacks_value == :bulk
+      if callbacks_value == :bulk
         yield
       else
         # set action and data

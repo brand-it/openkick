@@ -156,7 +156,7 @@ module Openkick
       update_language(settings, language)
       update_stemming(settings)
 
-      if Openkick.env == 'test'
+      if Openkick.env.test?
         settings[:number_of_shards] = 1
         settings[:number_of_replicas] = 0
       end
@@ -533,7 +533,7 @@ module Openkick
     end
 
     def below73?
-      Openkick.server_below?('7.3.0')
+      Openkick.client.server_below?('7.3.0')
     end
   end
 end

@@ -3,13 +3,12 @@ ENV['RACK_ENV'] = 'test'
 require 'bundler/setup'
 Bundler.require(:default)
 require 'minitest/autorun'
-require 'minitest/pride'
 require 'active_support/notifications'
 
 # for reloadable synonyms
 if ENV['CI']
-  ENV['ES_PATH'] ||= File.join(ENV.fetch('HOME', nil), Openkick.opensearch? ? 'opensearch' : 'elasticsearch',
-                               Openkick.server_version)
+  ENV['ES_PATH'] ||= File.join(ENV.fetch('HOME', nil), Openkick.client.opensearch? ? 'opensearch' : 'elasticsearch',
+                               Openkick.client.version)
 end
 
 $logger = ActiveSupport::Logger.new(ENV['VERBOSE'] ? STDOUT : nil)
@@ -25,7 +24,7 @@ end
 Openkick.search_timeout = 5
 Openkick.index_suffix = ENV.fetch('TEST_ENV_NUMBER', nil) # for parallel tests
 
-puts "Running against #{Openkick.opensearch? ? 'OpenSearch' : 'Elasticsearch'} #{Openkick.server_version}"
+puts "Running against #{Openkick.client.name}"
 
 I18n.config.enforce_available_locales = true
 

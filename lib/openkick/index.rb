@@ -1,5 +1,6 @@
 module Openkick
   class Index
+    include Helpers
     attr_reader :name, :options
 
     def initialize(name, options = {})
@@ -87,7 +88,7 @@ module Openkick
         begin
           client.indices.get_alias(name:).keys
         rescue StandardError => e
-          raise e unless Openkick.not_found_error?(e)
+          raise e unless not_found_error?(e)
 
           {}
         end
@@ -114,7 +115,7 @@ module Openkick
             client.indices.get_aliases
           end
         rescue StandardError => e
-          raise e unless Openkick.not_found_error?(e)
+          raise e unless not_found_error?(e)
 
           {}
         end
@@ -191,10 +192,10 @@ module Openkick
     end
 
     def reload_synonyms
-      if Openkick.opensearch?
+      if Openkick.client.opensearch?
         client.transport.perform_request 'POST', "_plugins/_refresh_search_analyzers/#{CGI.escape(name)}"
       else
-        raise Error, 'Requires Elasticsearch 7.3+' if Openkick.server_below?('7.3.0')
+        raise Error, 'Requires Elasticsearch 7.3+' if Openkick.client.server_below?('7.3.0')
 
         begin
           client.transport.perform_request('GET', "#{CGI.escape(name)}/_reload_search_analyzers")
@@ -224,9 +225,9 @@ module Openkick
 
       raise Error, 'Cannot reindex object' unless object.respond_to?(:openkick_klass)
 
-      scoped = Openkick.relation?(object)
+      scoped = relation?(object)
       # call openkick_klass for inheritance
-      relation = scoped ? object.all : Openkick.scope(object.openkick_klass).all
+      relation = scoped ? object.all : scope(object.openkick_klass).all
 
       refresh = options.fetch(:refresh, !scoped)
       options.delete(:refresh)
@@ -316,15 +317,15 @@ module Openkick
     end
 
     def queue_index(records)
-      Openkick.indexer.queue(records.map { |r| RecordData.new(self, r).index_data })
+      indexer.queue(records.map { |r| RecordData.new(self, r).index_data })
     end
 
     def queue_delete(records)
-      Openkick.indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(self, r).delete_data })
+      indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(self, r).delete_data })
     end
 
     def queue_update(records, method_name)
-      Openkick.indexer.queue(records.map { |r| RecordData.new(self, r).update_data(method_name) })
+      indexer.queue(records.map { |r| RecordData.new(self, r).update_data(method_name) })
     end
 
     def relation_indexer
@@ -340,7 +341,7 @@ module Openkick
     end
 
     def reindex_records(object, mode: nil, refresh: false, **options)
-      mode ||= Openkick.callbacks_value || @options[:callbacks] || :inline
+      mode ||= callbacks_value || @options[:callbacks] || :inline
       mode = :inline if mode == :bulk
 
       result = RecordIndexer.new(self).reindex(object, mode:, full: false, **options)
@@ -354,7 +355,7 @@ module Openkick
       raise ArgumentError, 'wait only available in :async mode' if !wait.nil? && mode != :async
 
       # TODO: raise ArgumentError in Openkick 6
-      Openkick.warn('Full reindex does not support :queue mode - use :async mode instead') if mode == :queue
+      warn('Full reindex does not support :queue mode - use :async mode instead') if mode == :queue
 
       if resume
         index_name = all_indices.sort.last
@@ -424,7 +425,7 @@ module Openkick
         true
       end
     rescue StandardError => e
-      if Openkick.transport_error?(e) && (e.message.include?('No handler for type [text]') || e.message.include?('class java.util.ArrayList cannot be cast to class java.util.Map'))
+      if transport_error?(e) && (e.message.include?('No handler for type [text]') || e.message.include?('class java.util.ArrayList cannot be cast to class java.util.Map'))
         raise UnsupportedVersionError
       end
 
@@ -442,7 +443,7 @@ module Openkick
     end
 
     def notify(record, name, &)
-      if Openkick.callbacks_value == :bulk
+      if callbacks_value == :bulk
         yield
       else
         name = "#{record.class.openkick_klass.name} #{name}" if record && record.class.openkick_klass
@@ -455,7 +456,7 @@ module Openkick
     end
 
     def notify_bulk(records, name, &)
-      if Openkick.callbacks_value == :bulk
+      if callbacks_value == :bulk
         yield
       else
         event = {

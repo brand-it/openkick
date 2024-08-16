@@ -1,5 +1,6 @@
 module Openkick
   class BulkReindexJob < ActiveJob::Base
+    include Helpers
     queue_as { Openkick.queue_name }
 
     # TODO: remove min_id and max_id in Openkick 6
@@ -11,8 +12,8 @@ module Openkick
       # legacy
       record_ids ||= min_id..max_id
 
-      relation = Openkick.scope(model)
-      relation = Openkick.load_records(relation, record_ids)
+      relation = scope(model)
+      relation = load_records(relation, record_ids)
       relation = relation.search_import if relation.respond_to?(:search_import)
 
       RecordIndexer.new(index).reindex(relation, mode: :inline, method_name:, full: false)

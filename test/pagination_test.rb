@@ -204,7 +204,7 @@ class PaginationTest < Minitest::Test
     store_names ['Product A', 'Product B', 'Product D', 'Product E', 'Product G']
 
     pit_id =
-      if Openkick.opensearch?
+      if Openkick.client.opensearch?
         path = "#{CGI.escape(Product.openkick_index.name)}/_search/point_in_time"
         Openkick.client.transport.perform_request('POST', path, { keep_alive: '5s' }).body['pit_id']
       else
@@ -236,7 +236,7 @@ class PaginationTest < Minitest::Test
 
     assert_empty products.map(&:name)
 
-    if Openkick.opensearch?
+    if Openkick.client.opensearch?
       Openkick.client.transport.perform_request('DELETE', '_search/point_in_time', {}, { pit_id: })
     else
       Openkick.client.close_point_in_time(body: { id: pit_id })
@@ -251,6 +251,6 @@ class PaginationTest < Minitest::Test
   private
 
   def pit_supported?
-    Openkick.opensearch? ? !Openkick.server_below?('2.4.0', true) : !Openkick.server_below?('7.10.0')
+    Openkick.client.opensearch? ? !Openkick.client.server_below?('2.4.0', true_version: true) : !Openkick.client.server_below?('7.10.0')
   end
 end

@@ -130,6 +130,11 @@ class MisspellingsTest < Minitest::Test
   private
 
   def prefix_length_misspellings_off?
-    Openkick.opensearch? ? Openkick.server_below?('2.0.0', true) : Openkick.server_below?('8.0.0')
+    if Openkick.client.opensearch?
+      Openkick.client.server_below?('2.0.0',
+                                    true_version: true)
+    else
+      Openkick.client.server_below?('8.0.0')
+    end
   end
 end

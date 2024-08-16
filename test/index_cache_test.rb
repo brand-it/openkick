@@ -2,7 +2,7 @@ require_relative 'test_helper'
 
 class IndexCacheTest < Minitest::Test
   def setup
-    Product.class_variable_get(:@@openkick_index_cache).clear
+    Product.send(:openkick_index_cache).clear
   end
 
   def test_default

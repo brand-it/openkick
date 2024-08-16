@@ -49,7 +49,7 @@ class Minitest::Test
   end
 
   def store_names(names, model = default_model, reindex: true)
-    store names.map { |name| { name: } }, model, reindex:
+    store(names.map { |name| { name: } }, model, reindex:)
   end
 
   # no order

@@ -2,9 +2,6 @@ module Openkick
   class Relation
     NO_DEFAULT_VALUE = Object.new
 
-    # NOTE: modifying body directly is not supported
-    # and has no impact on query after being executed
-    # TODO freeze body object?
     delegate :body, :params, to: :query
     delegate_missing_to :private_execute
 
@@ -27,24 +24,16 @@ module Openkick
       "#<#{self.class.name} [#{entries.join(', ')}]>"
     end
 
-    def execute
-      Openkick.warn('The execute method is no longer needed')
-      load
-    end
-
-    # experimental
     def limit(value)
       clone.limit!(value)
     end
 
-    # experimental
     def limit!(value)
       check_loaded
       @options[:limit] = value
       self
     end
 
-    # experimental
     def offset(value = NO_DEFAULT_VALUE)
       # TODO: remove in Openkick 6
       if value == NO_DEFAULT_VALUE
@@ -54,26 +43,22 @@ module Openkick
       end
     end
 
-    # experimental
     def offset!(value)
       check_loaded
       @options[:offset] = value
       self
     end
 
-    # experimental
     def page(value)
       clone.page!(value)
     end
 
-    # experimental
     def page!(value)
       check_loaded
       @options[:page] = value
       self
     end
 
-    # experimental
     def per_page(value = NO_DEFAULT_VALUE)
       # TODO: remove in Openkick 6
       if value == NO_DEFAULT_VALUE
@@ -83,14 +68,12 @@ module Openkick
       end
     end
 
-    # experimental
     def per_page!(value)
       check_loaded
       @options[:per_page] = value
       self
     end
 
-    # experimental
     def where(value = NO_DEFAULT_VALUE)
       if value == NO_DEFAULT_VALUE
         Where.new(self)
@@ -99,7 +82,6 @@ module Openkick
       end
     end
 
-    # experimental
     def where!(value)
       check_loaded
       @options[:where] = if @options[:where]
@@ -110,24 +92,20 @@ module Openkick
       self
     end
 
-    # experimental
     def rewhere(value)
       clone.rewhere!(value)
     end
 
-    # experimental
     def rewhere!(value)
       check_loaded
       @options[:where] = ensure_permitted(value)
       self
     end
 
-    # experimental
     def order(*values)
       clone.order!(*values)
     end
 
-    # experimental
     def order!(*values)
       values = values.first if values.size == 1 && values.first.is_a?(Array)
       check_loaded
@@ -135,19 +113,16 @@ module Openkick
       self
     end
 
-    # experimental
     def reorder(*values)
       clone.reorder!(*values)
     end
 
-    # experimental
     def reorder!(*values)
       check_loaded
       @options[:order] = values
       self
     end
 
-    # experimental
     def select(*values, &)
       if block_given?
         private_execute.select(*values, &)
@@ -156,19 +131,16 @@ module Openkick
       end
     end
 
-    # experimental
     def select!(*values)
       check_loaded
       (@options[:select] ||= []).concat(values)
       self
     end
 
-    # experimental
     def reselect(*values)
       clone.reselect!(*values)
     end
 
-    # experimental
     def reselect!(*values)
       check_loaded
       @options[:select] = values
