@@ -12,8 +12,8 @@ module Openkick
       models model_includes offset operator order padding
       page per_page profile request_params routing scope_results
       scroll select similar smart_aggs suggest total_entries
-      track type where rerank boost_by_field_value neural
-    ].freeze
+      track type where rerank boost_by_field_value neural neural_sparse
+    ].sort.freeze
 
     @@metric_aggs = %i[avg cardinality max min sum]
 
@@ -29,7 +29,7 @@ module Openkick
 
     def initialize(klass, term = '*', **options)
       if (unknown_keywords = options.keys - KNOWN_KEYWORDS).any?
-        raise ArgumentError, "unknown keywords: #{unknown_keywords.join(', ')}"
+        raise ArgumentError, "unknown keywords: #{unknown_keywords.join(', ')} | #{KNOWN_KEYWORDS.join(', ')}"
       end
 
       @term = term.to_s
@@ -444,6 +444,7 @@ module Openkick
           end
 
           Opensearch::Neural.call(term, queries:, options:)
+          Opensearch::NeuralSparse.call(term, queries:, options:)
 
           # all + exclude option
           if all
