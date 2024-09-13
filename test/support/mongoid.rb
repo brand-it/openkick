@@ -9,6 +9,8 @@ class Product
   include ::Mongoid::Document
   include ::Mongoid::Timestamps
 
+  belongs_to :store
+
   field :name
   field :store_id, type: Integer
   field :in_stock, type: Boolean
