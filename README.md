@@ -628,17 +628,59 @@ product.reindex(mode: :async) # :inline or :queue
 
 ### Associations
 
-Data is **not** automatically synced when an association is updated. If this is desired, add a callback to reindex:
+Data is **not** automatically synced when an association is updated. If this is desired, add a `after_commit_reindex` to the model:
+
 
 ```ruby
 class Image < ApplicationRecord
   belongs_to :product
 
-  after_commit :reindex_product
+  after_commit_reindex :product
+end
+```
 
-  def reindex_product
-    product.reindex
+Because this is still using the after_commit code provide by rails you can still use all the same options. The only option that is special to openkick is `method_name`
+```ruby
+after_commit_reindex :items, if: :saved_change_to_published?
+after_commit_reindex :items, unless: :saved_change_to_published?
+after_commit_reindex :items, except: [:create, :update]
+after_commit_reindex :items, on: :create
+```
+
+This bit of code is equivalent to if you build call `items.reindex(:custom_reindex_method)`
+```ruby
+after_commit_reindex :items, partial: :custom_reindex_method
+```
+
+```ruby
+class Image < ApplicationRecord
+  belongs_to :product
+
+  after_commit_reindex :product, partial: :reindex_image_names
+end
+
+
+# == Schema Information
+#
+# Table name: products
+#
+#  id :integer not null
+#  name :string not null
+class Product < ApplicationRecord
+  has_many :images
+  openkick
+
+  def search_data
+    {
+      name: name,
+      image_names: images.map(&:name)
+    }
   end
+
+  def reindex_image_names
+    {
+      image_names: image_names: images.map(&:name)
+    }
 end
 ```
 
@@ -2164,6 +2206,32 @@ And there’s a [new option](#default-scopes) for models with default scopes.
 
 Check out the [changelog](https://github.com/brandit/openkick/blob/master/CHANGELOG.md#500-2022-02-21) for the full list of changes.
 
+
+## Opensearch ML
+
+View [Pretrained Models](https://opensearch.org/docs/latest/ml-commons-plugin/pretrained-models)
+
+Opensearch provides pretrained models and some of these models are not easy to interact with because of bugs or just the total number of things you have to get setup to access the model.
+
+What this code does it makes access these models a little easier. At some point we will be setup to make the process of getting a model running easy.
+
+Here is a common one that can power search using only ML models and vectors.
+```ruby
+Product.search(
+  "Something Something Darkside",
+  neural_sparse: { embedding: { model_id: '0z0IfJEBXx4_Y8BguReS' } },
+  rerank: { search_pipeline: :cross_encoding_pipeline }
+)
+```
+
+The setup process, well right now it is a issue and it is something I'm working on.
+
+https://github.com/users/brand-it/projects/3/views/1?pane=issue&itemId=79745834
+
+I have some code I have used to get things working as apart of a proof of concept but the code is well crazy and it needs some work.
+
+At some point I will add the rake task to this gem but for now if your trying to use this gem just know everything is in progress and I have a lot of plans
+
 ## History
 
 View the [changelog](https://github.com/brandit/openkick/blob/master/CHANGELOG.md).
@@ -2202,6 +2270,10 @@ docker run -d --name opensearch \
 -e "DISABLE_SECURITY_PLUGIN=true" \
 opensearchproject/opensearch:latest
 bundle install
+export OPENSEARCH_URL=localhost:9200
+export RAILS_ENV=test
+export RACK_ENV=test
+
 bundle exec rake test
 ```
 

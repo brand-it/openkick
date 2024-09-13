@@ -35,10 +35,23 @@ class Product
       conversions:,
       user_ids:,
       location: { lat: latitude, lon: longitude },
-      multiple_locations: [{ lat: latitude, lon: longitude }, { lat: 0, lon: 0 }],
+      multiple_locations:,
       aisle:,
       details:
-    )
+    ).merge(store_name_data)
+  end
+
+  def store_name_data
+    {
+      store_name: store&.name
+    }
+  end
+
+  def multiple_locations
+    [
+      { lat: latitude, lon: longitude },
+      { lat: 0, lon: 0 }
+    ]
   end
 
   def should_index?
