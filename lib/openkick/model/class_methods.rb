@@ -96,7 +96,7 @@ module Openkick
           define_method(:"reindex_#{association}") do
             return unless Openkick.callbacks?
 
-            send(association).reindex(partial)
+            send(association)&.reindex(partial)
           end
         end
         if respond_to?(:after_commit)
