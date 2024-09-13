@@ -99,7 +99,13 @@ module Openkick
             try(association).try(:reindex, partial)
           end
         end
-        after_commit :"reindex_#{association}", options
+        if defined?(Mongoid)
+          # Mongoid-specific callbacks
+          after_save :"reindex_#{association}", options
+        else
+          # ActiveRecord callbacks
+          after_commit :"reindex_#{association}", options
+        end
       end
 
       def openkick_index_options
