@@ -47,6 +47,69 @@ module Openkick
       end
       alias reindex openkick_reindex unless method_defined?(:reindex)
 
+      # Defines a callback to reindex an associated model after a commit,
+      # with support for specifying a custom method name for reindexing.
+      #
+      # Usage: `after_commit_reindex :association, **options`
+      #
+      # This method defines an `after_commit` callback that triggers the
+      # reindexing of the specified association when the parent model is saved.
+      # It is designed to work with the Searchkick gem to reindex the associated
+      # model after a database commit has occurred, with an optional ability to
+      # specify a custom method for reindexing.
+      #
+      # Parameters:
+      # - `association` (Symbol): The name of the association to reindex.
+      # - `options` (Hash, optional): Additional options for the callback.
+      #   - `:if` (Symbol, optional): Condition for running the callback.
+      #   - `:unless` (Symbol, optional): Condition for skipping the callback.
+      #   - `:on` (Symbol, optional): Specify which action to trigger the callback on
+      #     (`:create`, `:update`, or `:destroy`).
+      #   - `:except` (Array, optional): Skip the callback on specific actions.
+      #   - `:method_name` (Symbol, optional): Custom method name to call when
+      #     reindexing. If provided, this method will be passed to the `reindex`
+      #     function of the association.
+      #
+      # Example usage:
+      #
+      #   after_commit_reindex :items, if: :saved_change_to_published?
+      #   after_commit_reindex :items, unless: :saved_change_to_published?
+      #   after_commit_reindex :items, except: [:create, :update]
+      #   after_commit_reindex :items, on: :create
+      #   after_commit_reindex :items, partial: :custom_reindex_method
+      #
+      # Customization:
+      # You can override the reindexing behavior for the association by
+      # defining a custom method `reindex_<association>`. For example:
+      #
+      #   def reindex_items
+      #     items.reindex(:custom_reindex_method)
+      #   end
+      #
+      # This method will automatically define a `reindex_<association>` method
+      # if one does not already exist, which is responsible for reindexing the
+      # associated records using Searchkick. If the `:method_name` option is
+      # passed, that method name will be provided to the `reindex` method of
+      def after_commit_reindex(association, **options)
+        partial = options.delete(:partial)
+        unless method_defined?(:"reindex_#{association}")
+          define_method(:"reindex_#{association}") do
+            return unless Openkick.callbacks?
+
+            send(association)&.reindex(partial)
+          end
+        end
+        if respond_to?(:after_commit)
+          # ActiveRecord callbacks
+          after_commit :"reindex_#{association}", **options
+        elsif respond_to?(:after_save)
+          # Mongoid-specific callbacks
+          after_save :"reindex_#{association}", **options
+        else
+          raise 'Could not implement after_commit_reindex model does not support after_safe or after_commit'
+        end
+      end
+
       def openkick_index_options
         openkick_index.index_options
       end
