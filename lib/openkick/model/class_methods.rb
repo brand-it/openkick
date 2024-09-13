@@ -99,12 +99,14 @@ module Openkick
             try(association).try(:reindex, partial)
           end
         end
-        if defined?(Mongoid)
+        if respond_to?(:after_commit)
+          # ActiveRecord callbacks
+          after_commit :"reindex_#{association}", options
+        elsif respond_to?(:after_save)
           # Mongoid-specific callbacks
           after_save :"reindex_#{association}", options
         else
-          # ActiveRecord callbacks
-          after_commit :"reindex_#{association}", options
+          raise 'Could not implement after_commit_reindex model does not support after_safe or after_commit'
         end
       end
 
