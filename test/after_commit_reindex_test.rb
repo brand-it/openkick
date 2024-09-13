@@ -40,7 +40,13 @@ class AfterCommitReindexTest < Minitest::Test
   end
 
   def test_product_reindex
-    Product.first.update_columns(color: 'silver')
+    product = Produc.first
+    if product.respond_to?(:set)
+      # mongoid version of update_column
+      product.set(color: 'silver')
+    else
+      product.update_columns(color: 'silver')
+    end
     Store.first.update!(name: 'New Name')
 
     Product.openkick_index.refresh
