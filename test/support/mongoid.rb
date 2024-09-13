@@ -9,7 +9,7 @@ class Product
   include ::Mongoid::Document
   include ::Mongoid::Timestamps
 
-  belongs_to :store
+  belongs_to :store, required: false
 
   field :name
   field :store_id, type: Integer
