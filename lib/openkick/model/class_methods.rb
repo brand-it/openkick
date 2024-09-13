@@ -101,10 +101,10 @@ module Openkick
         end
         if respond_to?(:after_commit)
           # ActiveRecord callbacks
-          after_commit :"reindex_#{association}", options
+          after_commit :"reindex_#{association}", **options
         elsif respond_to?(:after_save)
           # Mongoid-specific callbacks
-          after_save :"reindex_#{association}", options
+          after_save :"reindex_#{association}", **options
         else
           raise 'Could not implement after_commit_reindex model does not support after_safe or after_commit'
         end
