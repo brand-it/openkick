@@ -23,29 +23,6 @@ class Product
   field :longitude, type: BigDecimal
   field :description
   field :alt_description
-
-  def search_data
-    {
-      name:,
-      store_id:,
-      in_stock:,
-      backordered:,
-      orders_count:,
-      found_rate:,
-      price:,
-      color:,
-      latitude:,
-      longitude:,
-      description:,
-      alt_description:
-    }.merge(store_name_data)
-  end
-
-  def store_name_data
-    {
-      store_name: store&.name
-    }
-  end
 end
 
 class Store
