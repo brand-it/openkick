@@ -40,7 +40,7 @@ class AfterCommitReindexTest < Minitest::Test
   end
 
   def test_product_reindex
-    product = Produc.first
+    product = Product.first
     if product.respond_to?(:set)
       # mongoid version of update_column
       product.set(color: 'silver')
