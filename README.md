@@ -1,5 +1,7 @@
 # Openkick
 
+I like to say most of this code is not my own and I want to give all the credit to [Andrew Kane](https://github.com/ankane/searchkick). This work is a great foundation but I had somethings I wanted that was OpenSearch Specific features that might not work with the current system. 
+
 :rocket: Intelligent search made easy
 
 **Openkick learns what your users are looking for.** As more people search, it gets smarter and the results get better. It’s friendly for developers - and magical for your users.
@@ -21,12 +23,6 @@ Plus:
 - “Did you mean” suggestions
 - supports many languages
 - works with Active Record and Mongoid
-
-Check out [Searchjoy](https://github.com/brandit/searchjoy) for analytics and [Autosuggest](https://github.com/brandit/autosuggest) for query suggestions
-
-:tangerine: Battle-tested at [Instacart](https://www.instacart.com/opensource)
-
-[![Build Status](https://github.com/brandit/openkick/actions/workflows/build.yml/badge.svg)](https://github.com/brandit/openkick/actions)
 
 ## Contents
 

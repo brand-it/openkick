@@ -20,6 +20,9 @@ jobs:
       matrix:
         include:
           - ruby: 3.3
+            gemfile: gemfiles/activerecord80.gemfile
+            opensearch: 8
+          - ruby: 3.3
             gemfile: gemfiles/activerecord72.gemfile
             elasticsearch: 8
           - ruby: 3.3
@@ -83,15 +86,22 @@ jobs:
         with:
           path: ~/opensearch
           key: ${{ runner.os }}-opensearch-${{ matrix.opensearch }}
-      - uses: ankane/setup-opensearch@v1
-        if: ${{ matrix.opensearch }}
-        with:
-          opensearch-version: ${{ matrix.opensearch }}
-          plugins: |
-            analysis-kuromoji
-            analysis-smartcn
-            analysis-stempel
-            analysis-ukrainian
+      - name: Start OpenSearch
+        if: matrix.opensearch != ''
+        run: |
+          docker run -d --name opensearch -p 9200:9200 -e "discovery.type=single-node" -e "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" opensearchproject/opensearch:${{ matrix.opensearch }}
+      - name: Install OpenSearch plugins
+        if: matrix.opensearch != ''
+        run: |
+          docker exec opensearch /usr/share/opensearch/bin/opensearch-plugin install analysis-kuromoji
+          docker exec opensearch /usr/share/opensearch/bin/opensearch-plugin install analysis-smartcn
+          docker exec opensearch /usr/share/opensearch/bin/opensearch-plugin install analysis-stempel
+          docker exec opensearch /usr/share/opensearch/bin/opensearch-plugin install analysis-ukrainian
+          docker restart opensearch
+      - name: Wait for OpenSearch to restart
+        if: matrix.opensearch != ''
+        run: |
+          timeout 60 sh -c "until curl -s http://localhost:9200; do sleep 2; done"
 
       - uses: ankane/setup-mongodb@v1
         if: ${{ matrix.mongodb }}
