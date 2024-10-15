@@ -1,0 +1,17 @@
+source 'https://rubygems.org'
+
+gemspec path: '..'
+
+gem 'actionpack', '8.0.0.beta1'
+gem 'activejob', '8.0.0.beta1', require: 'active_job'
+gem 'activerecord', '8.0.0.beta1'
+gem 'connection_pool'
+gem 'gemoji-parser'
+gem 'kaminari'
+gem 'minitest', '>= 5'
+gem 'opensearch-ruby', '~> 3'
+gem 'parallel_tests'
+gem 'rake'
+gem 'redis-client'
+gem 'sqlite3', '< 2'
+gem 'typhoeus'

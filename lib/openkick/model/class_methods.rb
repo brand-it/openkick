@@ -54,7 +54,7 @@ module Openkick
       #
       # This method defines an `after_commit` callback that triggers the
       # reindexing of the specified association when the parent model is saved.
-      # It is designed to work with the Searchkick gem to reindex the associated
+      # It is designed to work with the Openkick gem to reindex the associated
       # model after a database commit has occurred, with an optional ability to
       # specify a custom method for reindexing.
       #
@@ -88,7 +88,7 @@ module Openkick
       #
       # This method will automatically define a `reindex_<association>` method
       # if one does not already exist, which is responsible for reindexing the
-      # associated records using Searchkick. If the `:method_name` option is
+      # associated records using Openkick. If the `:method_name` option is
       # passed, that method name will be provided to the `reindex` method of
       def after_commit_reindex(association, **options)
         partial = options.delete(:partial)

@@ -3,6 +3,7 @@
 module Openkick
   class Error < StandardError; end
   class MissingIndexError < Error; end
+  class NotFoundError < Error; end
 
   class UnsupportedVersionError < Error
     def message
