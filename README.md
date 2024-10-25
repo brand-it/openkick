@@ -1334,7 +1334,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each, search: true) do |example|
-    Openkick.callbacks(nil) do
+    Openkick.callbacks(:inline) do
       example.run
     end
   end
