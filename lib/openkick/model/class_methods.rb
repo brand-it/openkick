@@ -92,11 +92,10 @@ module Openkick
       # passed, that method name will be provided to the `reindex` method of
       def after_commit_reindex(association, **options)
         partial = options.delete(:partial)
-        unless method_defined?(:"reindex_#{association}")
+        assocation_name = :"reindex_#{association}"
+        unless method_defined?(assocation_name)
           define_method(:"reindex_#{association}") do
-            return unless Openkick.callbacks?
-
-            send(association)&.reindex(partial)
+            send(association)&.reindex(partial) if self.class.openkick_callbacks_enabled?
           end
         end
         if respond_to?(:after_commit)
@@ -122,6 +121,15 @@ module Openkick
                                    Openkick.env,
                                    Openkick.index_suffix
                                  ].compact.join('_')
+      end
+
+      def openkick_callbacks_enabled?
+        @callbacks_enabled ||= reflect_on_association(association)&.class_name
+                                                                  &.constantize
+                                                                  &.searchkick_options
+                                                           &.[](:callbacks)
+        @callbacks_enabled ||= Searchkick.model_options[:callbacks]
+        Openkick.callbacks?(default: @callbacks_enabled)
       end
 
       private
